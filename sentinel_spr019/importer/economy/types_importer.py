@@ -81,9 +81,6 @@ def import_types(xml_file, db_file):
     finally:
         conn.close()
 
-    print(
-        f"import_types: inserted={inserted}, updated={updated}, skipped={skipped}"
-    )
     return inserted, updated, skipped
 
 
@@ -115,6 +112,7 @@ def _ensure_items_table(cur):
         cur.execute("ALTER TABLE economy_items RENAME COLUMN item_name TO name")
         columns = _get_columns(cur, "economy_items")
 
+    # Legacy schemas may expose the old quantity column names separately.
     if "quantmin" in columns and "min_value" not in columns:
         cur.execute("ALTER TABLE economy_items RENAME COLUMN quantmin TO min_value")
         columns = _get_columns(cur, "economy_items")
@@ -304,10 +302,18 @@ def _sync_relations(cur, item_id, item):
             for element in item.findall(element_name)
             if element.get("name")
         ]
-        _replace_relations(cur, item_id, related_names, lookup_table, join_table, foreign_key)
+        _replace_relations(
+            cur,
+            item_id,
+            item.get("name"),
+            related_names,
+            lookup_table,
+            join_table,
+            foreign_key,
+        )
 
 
-def _replace_relations(cur, item_id, names, lookup_table, join_table, foreign_key):
+def _replace_relations(cur, item_id, item_name, names, lookup_table, join_table, foreign_key):
     lookup_table = _validate_identifier(lookup_table, ALLOWED_TABLE_NAMES)
     join_table = _validate_identifier(join_table, ALLOWED_TABLE_NAMES)
     foreign_key = _validate_identifier(foreign_key, ALLOWED_FOREIGN_KEYS)
@@ -323,7 +329,13 @@ def _replace_relations(cur, item_id, names, lookup_table, join_table, foreign_ke
             f"SELECT id FROM {lookup_table} WHERE name = ?",
             (name,),
         )
-        related_id = cur.fetchone()[0]
+        row = cur.fetchone()
+        if row is None:
+            raise RuntimeError(
+                f"Failed to resolve related id for item '{item_name}' "
+                f"(item_id={item_id}) in {lookup_table}:{name}"
+            )
+        related_id = row[0]
         cur.execute(
             f"INSERT OR IGNORE INTO {join_table} (item_id, {foreign_key}) VALUES (?, ?)",
             (item_id, related_id),
