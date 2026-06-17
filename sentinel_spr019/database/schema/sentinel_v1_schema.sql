@@ -3,14 +3,12 @@ PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS economy_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    item_name TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL UNIQUE,
     nominal INTEGER,
     lifetime INTEGER,
     restock INTEGER,
-    min_count INTEGER,
-    quantmin INTEGER,
-    quantmax INTEGER,
-    cost INTEGER
+    min_value INTEGER,
+    max_value INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS economy_item_flags (
