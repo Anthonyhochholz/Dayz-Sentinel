@@ -1,0 +1,1 @@
+SPR-008: Erstes Economy Items Endpoint-Gerüst erstellt.

@@ -1,0 +1,1 @@
+SPR-014: API-Validierung vorbereitet. Ziel: economy_items aus SQLite über /api/v1/economy/items ausgeben.

@@ -1,0 +1,9 @@
+services:
+  sentinel:
+    build: .
+    container_name: dayz-sentinel
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./sentinel_spr019/database/sqlite:/app/sentinel_spr019/database/sqlite
+    restart: unless-stopped

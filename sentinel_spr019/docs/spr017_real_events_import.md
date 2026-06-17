@@ -1,0 +1,1 @@
+Mirror analysiert. Gefundene Events: 58. events_importer.py auf echten events.xml Import ausgerichtet.

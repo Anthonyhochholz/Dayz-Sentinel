@@ -1,0 +1,3 @@
+
+class EconomyItem:
+    pass

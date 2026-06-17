@@ -1,0 +1,1 @@
+SPR-010 vorbereitet: Testimport-Pipeline types.xml -> SQLite -> API.
