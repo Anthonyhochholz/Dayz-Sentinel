@@ -40,10 +40,10 @@ These items improve maintainability, correctness, and developer experience.
 | P2-001 | Centralize `dict_factory` in `database.py`; remove duplicates from `economy_items_repository.py:128` and `economy_events_repository.py:177` | AUDIT-006 | SPR-021 |
 | P2-002 | Delete `economy_repository.py` (dead code at `api/repositories/economy_repository.py`); remove unused model imports | AUDIT-007 | SPR-021 |
 | P2-003 | Add `requests` to `requirements.txt` | AUDIT-008 | SPR-021 |
-| P2-004 | Fix broken import in `scripts/test_import_run.py`: add `sentinel_spr019.` package prefix and implement `types_importer.py` to import `types.xml` economy items | AUDIT-009 | SPR-021 |
+| P2-004 | ✅ Fix broken import in `scripts/test_import_run.py` and implement `types_importer.py` to import `types.xml` economy items | AUDIT-009 | SPR-021 |
 | P2-005 | Add `offset` parameter to `search()` methods in both repositories (currently ignored despite being accepted by routes) | AUDIT-010 | SPR-021 |
 | P2-006 | Rename package from `sentinel_spr019` to `sentinel` | AUDIT-011 | SPR-022 |
-| P2-007 | Add `pytest` test suite with in-memory SQLite fixtures (replaces manual `scripts/test_api.py` integration runner) | — | SPR-022 |
+| P2-007 | ✅ Add `pytest` test suite with in-memory SQLite fixtures (`tests/test_types_importer.py`, 21 tests) | — | SPR-021 |
 | P2-008 | Pin dependency versions in `requirements.txt` | — | SPR-021 |
 
 ---
@@ -82,6 +82,10 @@ These items expand functionality and set up future scale.
 
 | ID | Task | Sprint |
 |----|------|--------|
+| — | `types_importer.py` implemented (upsert, transactions, flags + relations) | SPR-021 |
+| — | `tests/test_types_importer.py` — 21 pytest unit tests (in-memory SQLite) | SPR-021 |
+| — | `docs/decisions/ADR-0001-economy-items-schema.md` — schema decision documented | SPR-021 |
+| — | AUDIT-009 resolved | SPR-021 |
 | — | Initial FastAPI scaffold | SPR-010 |
 | — | Economy items import from `types.xml` | SPR-010 |
 | — | Items API endpoints (GET list, GET by name, count) | SPR-015 |
@@ -92,4 +96,4 @@ These items expand functionality and set up future scale.
 
 ---
 
-*Last updated: 2026-06-17*
+*Last updated: 2026-06-17 · SPR-021*

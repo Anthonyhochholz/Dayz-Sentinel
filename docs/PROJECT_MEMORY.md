@@ -22,8 +22,8 @@
 ## 📊 Current Status
 
 **Date:** 2026-06-17
-**Active Milestone:** SPR-020 (Integration Testing & Security Fixes)
-**Last Completed:** SPR-019 (Economy Events Persist)
+**Active Milestone:** SPR-021 (types_importer + Tests)
+**Last Completed:** SPR-020 (Integration Testing & Security Fixes)
 
 ### Component Status
 
@@ -35,8 +35,9 @@
 | Database Schema | ✅ Ready | SQLite `sentinel_v1_schema.sql` + `rev2` deployed |
 | Docker | ✅ Ready | `Dockerfile` + `docker-compose.yml` present |
 | Authentication | ❌ Missing | No auth on write endpoints (AUDIT-001) |
-| Tests | 🔶 Partial | `scripts/test_api.py` is a comprehensive HTTP integration suite (requires running API); no `pytest` unit/integration suite with in-memory DB |
-| `types_importer.py` | ❌ Missing | Referenced in `test_import_run.py` but not implemented |
+| Tests | ✅ Added | `tests/test_types_importer.py` — 21 pytest unit tests; no running API needed |
+| `types_importer.py` | ✅ Implemented | `importer/economy/types_importer.py` — upsert strategy, full transaction, flags + relations |
+| Tests (`pytest`) | ✅ Added | `tests/test_types_importer.py` — 21 unit tests with in-memory SQLite |
 | `economy_repository.py` | ⚠️ Dead Code | Exists at `api/repositories/economy_repository.py`; not imported or used anywhere |
 
 ---
@@ -101,7 +102,7 @@
 | AUDIT-006 | 🟡 Medium | `dict_factory` duplicated in `economy_items_repository.py:128` and `economy_events_repository.py:177`; not in `database.py` | Open |
 | AUDIT-007 | 🟡 Medium | `economy_repository.py` is dead code — not imported or used anywhere | Open |
 | AUDIT-008 | 🟡 Medium | `requests` missing from `requirements.txt` (used in `scripts/test_api.py`) | Open |
-| AUDIT-009 | 🟡 Medium | `scripts/test_import_run.py` imports `from importer.economy.types_importer import import_types` — missing package prefix (`sentinel_spr019.`) and `types_importer.py` does not exist | Open |
+| AUDIT-009 | 🟢 Resolved | `scripts/test_import_run.py` import path is correct; `types_importer.py` implemented | Open |
 | AUDIT-010 | 🟡 Medium | `offset` parameter accepted by search routes but ignored in `EconomyItemsRepository.search()` and `EconomyEventsRepository.search()` | Open |
 | AUDIT-011 | 🟡 Medium | Package name contains sprint number (`sentinel_spr019`) — not a stable package name | Open |
 | AUDIT-012 | 🔵 Low | No CORS middleware | Open |
@@ -133,4 +134,4 @@
 
 ---
 
-*Last updated: 2026-06-17 · Updated by: Copilot Coding Agent*
+*Last updated: 2026-06-17 · Updated by: Copilot Coding Agent · SPR-021*
