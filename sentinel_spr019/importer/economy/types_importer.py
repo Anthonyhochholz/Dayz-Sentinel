@@ -1,6 +1,8 @@
+import logging
 import sqlite3
 import xml.etree.ElementTree as ET
 
+LOGGER = logging.getLogger(__name__)
 
 FLAG_FIELDS = (
     "count_in_cargo",
@@ -17,6 +19,21 @@ RELATION_TABLES = (
     ("value", "economy_values", "economy_item_values", "value_id"),
     ("tag", "economy_tags", "economy_item_tags", "tag_id"),
 )
+
+ALLOWED_TABLE_NAMES = {
+    "economy_items",
+    "economy_item_flags",
+    "economy_categories",
+    "economy_item_categories",
+    "economy_usages",
+    "economy_item_usages",
+    "economy_values",
+    "economy_item_values",
+    "economy_tags",
+    "economy_item_tags",
+}
+
+ALLOWED_FOREIGN_KEYS = {"category_id", "usage_id", "value_id", "tag_id"}
 
 
 def import_types(xml_file, db_file):
@@ -59,6 +76,7 @@ def import_types(xml_file, db_file):
         conn.commit()
     except Exception:
         conn.rollback()
+        LOGGER.exception("Failed to import types from %s into %s", xml_file, db_file)
         raise
     finally:
         conn.close()
@@ -290,6 +308,10 @@ def _sync_relations(cur, item_id, item):
 
 
 def _replace_relations(cur, item_id, names, lookup_table, join_table, foreign_key):
+    lookup_table = _validate_identifier(lookup_table, ALLOWED_TABLE_NAMES)
+    join_table = _validate_identifier(join_table, ALLOWED_TABLE_NAMES)
+    foreign_key = _validate_identifier(foreign_key, ALLOWED_FOREIGN_KEYS)
+
     cur.execute(f"DELETE FROM {join_table} WHERE item_id = ?", (item_id,))
 
     for name in names:
@@ -322,6 +344,7 @@ def _table_exists(cur, table_name):
 
 
 def _get_columns(cur, table_name):
+    table_name = _validate_identifier(table_name, ALLOWED_TABLE_NAMES)
     cur.execute(f"PRAGMA table_info({table_name})")
     return [row[1] for row in cur.fetchall()]
 
@@ -330,3 +353,9 @@ def _parse_int(value):
     if value in (None, ""):
         return None
     return int(value)
+
+
+def _validate_identifier(value, allowed_values):
+    if value not in allowed_values:
+        raise ValueError(f"Unsupported SQL identifier: {value}")
+    return value
