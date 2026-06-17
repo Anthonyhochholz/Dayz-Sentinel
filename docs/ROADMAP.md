@@ -1,6 +1,6 @@
 # Roadmap — DayZ Sentinel
 
-> Prioritized list of planned improvements and features.  
+> Prioritized list of planned improvements and features.
 > Updated after each sprint review.
 
 ---
@@ -26,7 +26,7 @@ These items address security vulnerabilities or production-blocking bugs identif
 | P1-001 | Add API-Key authentication for all write (POST/PUT/DELETE) endpoints | AUDIT-001 | SPR-020 |
 | P1-002 | Replace `detail=str(e)` with generic 500 messages; log full error server-side | AUDIT-002 | SPR-020 |
 | P1-003 | Wrap all `sqlite3.connect()` calls in context managers to prevent connection leaks | AUDIT-003 | SPR-020 |
-| P1-004 | Replace f-String SQL interpolation with parameterized queries in all repositories | AUDIT-004 | SPR-020 |
+| P1-004 | Replace f-String SQL interpolation with parameterized queries in `economy_events_repository.py` (lines 30, 36–44, 107–114, 130) | AUDIT-004 | SPR-020 |
 | P1-005 | Read `API_PORT` from `.env` in `docker-compose.yml` and `Dockerfile` | AUDIT-005 | SPR-020 |
 
 ---
@@ -37,13 +37,13 @@ These items improve maintainability, correctness, and developer experience.
 
 | ID | Task | Audit Ref | Sprint |
 |----|------|-----------|--------|
-| P2-001 | Centralize `dict_factory` in `database.py`; remove duplicates from repositories | AUDIT-006 | SPR-021 |
-| P2-002 | Delete `economy_repository.py` (dead code); remove unused model imports | AUDIT-007 | SPR-021 |
+| P2-001 | Centralize `dict_factory` in `database.py`; remove duplicates from `economy_items_repository.py:128` and `economy_events_repository.py:177` | AUDIT-006 | SPR-021 |
+| P2-002 | Delete `economy_repository.py` (dead code at `api/repositories/economy_repository.py`); remove unused model imports | AUDIT-007 | SPR-021 |
 | P2-003 | Add `requests` to `requirements.txt` | AUDIT-008 | SPR-021 |
-| P2-004 | Implement `types_importer.py` to import `types.xml` economy items | AUDIT-009 | SPR-021 |
-| P2-005 | Add `offset` parameter to `search()` methods in both repositories | AUDIT-010 | SPR-021 |
+| P2-004 | Fix broken import in `scripts/test_import_run.py`: add `sentinel_spr019.` package prefix and implement `types_importer.py` to import `types.xml` economy items | AUDIT-009 | SPR-021 |
+| P2-005 | Add `offset` parameter to `search()` methods in both repositories (currently ignored despite being accepted by routes) | AUDIT-010 | SPR-021 |
 | P2-006 | Rename package from `sentinel_spr019` to `sentinel` | AUDIT-011 | SPR-022 |
-| P2-007 | Add `pytest` test suite with in-memory SQLite fixtures | — | SPR-022 |
+| P2-007 | Add `pytest` test suite with in-memory SQLite fixtures (replaces manual `scripts/test_api.py` integration runner) | — | SPR-022 |
 | P2-008 | Pin dependency versions in `requirements.txt` | — | SPR-021 |
 
 ---
@@ -59,7 +59,7 @@ These items expand functionality and set up future scale.
 | P3-003 | Implement player log import pipeline (`players`, `player_sessions`, `player_positions`) | Schema exists | SPR-023 |
 | P3-004 | Implement server session log import (`server_sessions`, `script_sessions`) | Schema exists | SPR-023 |
 | P3-005 | Implement damage event import and analytics endpoint | Schema exists | SPR-024 |
-| P3-006 | Add schema migration tooling (Alembic or custom runner for v1 → rev2) | — | SPR-022 |
+| P3-006 | Add schema migration tooling (Alembic or custom runner) and fix `sentinel_v1_schema.sql` to match deployed DB column names (`item_name` → `name`, etc.) | Schema/live DB mismatch | SPR-022 |
 | P3-007 | Add Swagger/OpenAPI response schemas (replace `response_model=dict`) | — | SPR-023 |
 | P3-008 | Rate limiting via `slowapi` | — | SPR-024 |
 | P3-009 | Repository methods return typed Pydantic models instead of plain `dict` | — | SPR-023 |
@@ -88,6 +88,7 @@ These items expand functionality and set up future scale.
 | — | Economy events import from `events.xml` | SPR-016 – SPR-018 |
 | — | Events API endpoints (GET list, GET by name, toggle, count) | SPR-019 |
 | — | Docker + Docker Compose setup | SPR-019 |
+| — | Comprehensive HTTP integration test suite (`scripts/test_api.py`) | SPR-020 |
 
 ---
 
