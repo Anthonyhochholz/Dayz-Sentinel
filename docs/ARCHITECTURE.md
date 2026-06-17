@@ -51,17 +51,18 @@ DayZ Sentinel is a single-container, self-hosted REST API. It imports DayZ serve
 
 | Layer | Path | Responsibility |
 |-------|------|----------------|
-| **Entrypoint** | `api/main.py` | FastAPI app setup, router registration |
-| **Routes** | `api/routes/economy_items.py` | HTTP handlers, input validation, response shaping |
-| | `api/routes/economy_events.py` | HTTP handlers for events, toggle endpoint |
-| **Models** | `api/models/economy_item.py` | Pydantic schemas: `EconomyItemBase`, `EconomyItem`, `EconomyItemResponse` |
-| | `api/models/economy_event.py` | Pydantic schemas: `EconomyEventBase`, `EconomyEvent`, `EconomyEventResponse` |
-| **Repositories** | `api/repositories/economy_items_repository.py` | `get_all()`, `get_by_name()`, `search()`, `get_count()` |
-| | `api/repositories/economy_events_repository.py` | `get_all()`, `get_by_name()`, `search()`, `get_count()`, `toggle_active()` |
-| **DB Connection** | `api/database.py` | `get_connection()` → `sqlite3.connect(db_path)` |
-| **Importer** | `importer/economy/events_importer.py` | XML parse → INSERT INTO `economy_events` |
-| **Schema** | `database/schema/sentinel_v1_schema.sql` | Full table definitions |
-| | `database/schema/sentinel_v1_schema_rev2.sql` | Delta: import tracking, log events |
+| **Entrypoint** | `sentinel_spr019/api/main.py` | FastAPI app setup, router registration |
+| **Routes** | `sentinel_spr019/api/routes/economy_items.py` | HTTP handlers, input validation, response shaping |
+| | `sentinel_spr019/api/routes/economy_events.py` | HTTP handlers for events, toggle endpoint |
+| **Models** | `sentinel_spr019/api/models/economy_item.py` | Pydantic schemas: `EconomyItemBase`, `EconomyItem`, `EconomyItemResponse` |
+| | `sentinel_spr019/api/models/economy_event.py` | Pydantic schemas: `EconomyEventBase`, `EconomyEvent`, `EconomyEventResponse` |
+| **Repositories** | `sentinel_spr019/api/repositories/economy_items_repository.py` | `get_all()`, `get_by_name()`, `search()`, `get_count()` |
+| | `sentinel_spr019/api/repositories/economy_events_repository.py` | `get_all()`, `get_by_name()`, `search()`, `get_count()`, `toggle_active()` |
+| | `sentinel_spr019/api/repositories/economy_repository.py` | ⚠️ **Dead code** — `EconomyRepository.get_items()`; not imported or used anywhere (AUDIT-007) |
+| **DB Connection** | `sentinel_spr019/api/database.py` | `get_connection()` → `sqlite3.connect(db_path)` — returns raw connection, no context manager (AUDIT-003) |
+| **Importer** | `sentinel_spr019/importer/economy/events_importer.py` | XML parse → `INSERT INTO economy_events` |
+| **Schema** | `sentinel_spr019/database/schema/sentinel_v1_schema.sql` | Full table definitions (original design) |
+| | `sentinel_spr019/database/schema/sentinel_v1_schema_rev2.sql` | Delta: import tracking, log/script event tables |
 
 ---
 
@@ -81,6 +82,8 @@ Client
                                       └─▶ JSON { data: [...], total: N, limit: 50, offset: 0 }
 ```
 
+> ⚠️ `offset` is accepted as a query parameter in the search branch but is **not passed** to `EconomyItemsRepository.search()` or `EconomyEventsRepository.search()` — it is silently ignored (AUDIT-010).
+
 ### 3.2 Write Flow (POST toggle)
 
 ```
@@ -93,22 +96,28 @@ Client
                           └─▶ JSON { event_name, active: true/false, message }
 ```
 
+> ⚠️ No authentication on this endpoint (AUDIT-001).
+
 ### 3.3 Import Flow (one-time, manual)
 
 ```
 DayZ Server Files
-  ├── types.xml   ──▶ [types_importer.py — NOT YET IMPLEMENTED]  ──▶ economy_items
+  ├── types.xml   ──▶ [types_importer.py — NOT IMPLEMENTED]  ──▶ economy_items
   └── events.xml  ──▶ events_importer.import_events(xml_file, db_file) ──▶ economy_events
 ```
+
+> ⚠️ `types_importer.py` does not exist. The `economy_items` table was populated by an out-of-repo process. `scripts/test_import_run.py` references it with a broken import path (AUDIT-009).
 
 ---
 
 ## 4. Database Schema
 
-### 4.1 Core Economy Tables
+> ⚠️ **Schema vs. Live DB Discrepancy:** `sentinel_v1_schema.sql` defines `economy_items` with columns `item_name`, `min_count`, `quantmin`, `quantmax`, `cost`. The running API repositories query `name`, `min_value`, `max_value` instead — matching the actual `sentinel.db`. The schema file reflects an earlier iteration that was never updated to match the deployed database.
+
+### 4.1 Core Economy Tables (as queried by the API)
 
 ```sql
-economy_items
+economy_items  -- columns as used by the live API / repositories
   id INTEGER PK AUTOINCREMENT
   name TEXT NOT NULL UNIQUE       -- item class name
   nominal FLOAT                   -- target spawn count
@@ -120,7 +129,7 @@ economy_items
 economy_events
   id INTEGER PK AUTOINCREMENT
   event_name TEXT NOT NULL UNIQUE
-  nominal FLOAT
+  nominal INTEGER
   min_count INTEGER
   max_count INTEGER
   lifetime INTEGER
@@ -137,7 +146,7 @@ economy_events
 
 | Table | Purpose |
 |-------|---------|
-| `economy_item_flags` | Count flags per item (cargo, map, player, crafted, deloot) |
+| `economy_item_flags` | Count flags per item (cargo, hoarder, map, player, crafted, deloot) |
 | `economy_categories` | Item categories lookup |
 | `economy_item_categories` | M:N item ↔ category |
 | `economy_usages` | Usage zone types |
@@ -155,10 +164,19 @@ economy_events
 | Table | Purpose |
 |-------|---------|
 | `group_prototypes` | Spawn group definitions |
+| `group_categories` | Group category lookup |
+| `group_prototype_categories` | M:N group ↔ category |
+| `group_usages` | Group usage lookup |
+| `group_prototype_usages` | M:N group ↔ usage |
+| `group_tags` | Group tag lookup |
+| `group_prototype_tags` | M:N group ↔ tag |
+| `group_points` | Spawn point positions within a group |
+| `group_proxies` | Proxy object positions within a group |
 | `cluster_instances` | 3D cluster positions |
 | `map_objects` | Map static objects |
 | `territory_files` | Territory file index |
 | `territories` | Territory color/config |
+| `territory_zone_types` | Zone type lookup |
 | `territory_zones` | Zone geometries |
 
 ### 4.4 Player / Server Tables
@@ -179,15 +197,27 @@ economy_events
 | `import_sources` | Named import source registry |
 | `import_runs` | Per-run status (started, finished, status) |
 
+### 4.6 Log / Script Event Tables (rev2)
+
+| Table | Purpose |
+|-------|---------|
+| `localization_errors` | Missing localization key events |
+| `network_events` | Network event log per server session |
+| `script_sessions` | Script log file sessions |
+| `script_engine_events` | Raw script engine event lines |
+| `script_logout_events` | Player logout events from script logs |
+| `script_persistence_events` | Persistence events from script logs |
+| `script_errors` | Script error events |
+
 ---
 
 ## 5. Configuration
 
 | Variable | Default | Source | Used |
 |----------|---------|--------|------|
-| `TZ` | `Europe/Berlin` | `.env` | ✅ Docker |
-| `API_PORT` | `8000` | `.env` | ⚠️ Hardcoded in `docker-compose.yml` — not read |
-| `SENTINEL_API_KEY` | — | `.env` | ❌ Not implemented yet |
+| `TZ` | `Europe/Berlin` | `.env.example` | ✅ Docker (must be copied to `.env`) |
+| `API_PORT` | `8000` | `.env.example` | ⚠️ Hardcoded in `docker-compose.yml` and `Dockerfile` — `.env` is never loaded (AUDIT-005) |
+| `SENTINEL_API_KEY` | — | `.env.example` | ❌ Not implemented yet (AUDIT-001) |
 
 ---
 
@@ -200,7 +230,7 @@ docker-compose up -d
 ```
 
 - Image: `python:3.11-slim`
-- Exposed port: `8000`
+- Exposed port: `8000` (hardcoded)
 - Volume: `./sentinel_spr019/database/sqlite` → `/app/sentinel_spr019/database/sqlite`
 - Restart policy: `unless-stopped`
 
@@ -209,6 +239,17 @@ docker-compose up -d
 ```
 uvicorn sentinel_spr019.api.main:app --host 0.0.0.0 --port 8000
 ```
+
+---
+
+## 7. Known Code Issues (Architecture Impact)
+
+| Issue | Location | Impact |
+|-------|----------|--------|
+| `dict_factory` duplicated | `economy_items_repository.py:128`, `economy_events_repository.py:177` | Should be in `database.py` (AUDIT-006) |
+| No context manager on DB connections | All 3 repository files + `database.py` | Connection leaks on unhandled exceptions (AUDIT-003) |
+| f-String SQL interpolation | `economy_events_repository.py:30,36–44,107–114,130` | SQL injection risk (AUDIT-004) |
+| `response_model=dict` on all routes | All route handlers | No OpenAPI response schema validation |
 
 ---
 
