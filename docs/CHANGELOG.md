@@ -17,6 +17,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.4.0] — 2026-06-17 · SPR-021 types_importer
+
+### Added
+- `sentinel_spr019/importer/economy/types_importer.py` — full implementation
+  - Imports `types.xml` into `economy_items` with upsert strategy (update existing, insert new)
+  - Populates `economy_item_flags` from `<flags>` attributes
+  - Populates `economy_categories` / `economy_item_categories` (M:N)
+  - Populates `economy_usages` / `economy_item_usages` (M:N)
+  - Populates `economy_values` / `economy_item_values` (M:N)
+  - Populates `economy_tags` / `economy_item_tags` (M:N)
+  - Full transaction wrapping — any failure rolls back the entire import
+  - Defensive schema migration: renames legacy columns (`item_name → name`,
+    `quantmin → min_value`, `quantmax → max_value`) on first run if found
+- `tests/test_types_importer.py` — 21 pytest unit tests (all passing)
+  - Tests: basic insert, upsert strategy, flags, categories, usages, values, tags,
+    multiple relations, transaction rollback, schema migration, large import (100 items)
+- `docs/decisions/ADR-0001-economy-items-schema.md` — architecture decision record
+  documenting the canonical `economy_items` column set
+
+### Fixed
+- AUDIT-009: `scripts/test_import_run.py` import path confirmed correct;
+  `types_importer.py` now exists and is reachable
+
+### Changed
+- `docs/ARCHITECTURE.md` — updated import flow diagram and layer breakdown; removed "NOT IMPLEMENTED" note
+- `docs/PROJECT_MEMORY.md` — updated component status table; AUDIT-009 marked resolved
+- `docs/ROADMAP.md` — P2-004 and P2-007 marked ✅ complete
+
+---
+
 ## [0.3.0] — 2026-06-17 · SPR-019 Complete
 
 ### Added

@@ -43,6 +43,7 @@ DayZ Sentinel is a single-container, self-hosted REST API. It imports DayZ serve
 
   One-time Import (manual, external):
   DayZ XML files ──▶ events_importer.py ──▶ sentinel.db
+                ──▶ types_importer.py  ──▶ sentinel.db
 ```
 
 ---
@@ -61,6 +62,8 @@ DayZ Sentinel is a single-container, self-hosted REST API. It imports DayZ serve
 | | `sentinel_spr019/api/repositories/economy_repository.py` | ⚠️ **Dead code** — `EconomyRepository.get_items()`; not imported or used anywhere (AUDIT-007) |
 | **DB Connection** | `sentinel_spr019/api/database.py` | `get_connection()` → `sqlite3.connect(db_path)` — returns raw connection, no context manager (AUDIT-003) |
 | **Importer** | `sentinel_spr019/importer/economy/events_importer.py` | XML parse → `INSERT INTO economy_events` |
+| | `sentinel_spr019/importer/economy/types_importer.py` | XML parse → upsert into `economy_items` + flags/categories/usages/values/tags |
+| **Tests** | `tests/test_types_importer.py` | 21 pytest unit tests for `types_importer` (in-memory SQLite) |
 | **Schema** | `sentinel_spr019/database/schema/sentinel_v1_schema.sql` | Full table definitions (original design) |
 | | `sentinel_spr019/database/schema/sentinel_v1_schema_rev2.sql` | Delta: import tracking, log/script event tables |
 
@@ -102,11 +105,12 @@ Client
 
 ```
 DayZ Server Files
-  ├── types.xml   ──▶ [types_importer.py — NOT IMPLEMENTED]  ──▶ economy_items
+  ├── types.xml   ──▶ types_importer.import_types(xml_file, db_file)  ──▶ economy_items + flags/categories/usages/values/tags
   └── events.xml  ──▶ events_importer.import_events(xml_file, db_file) ──▶ economy_events
 ```
 
-> ⚠️ `types_importer.py` does not exist. The `economy_items` table was populated by an out-of-repo process. `scripts/test_import_run.py` references it with a broken import path (AUDIT-009).
+> Both importers are idempotent: re-running with the same file updates existing rows
+> (upsert strategy for `types_importer`; skip-on-conflict for `events_importer`).
 
 ---
 
@@ -253,4 +257,4 @@ uvicorn sentinel_spr019.api.main:app --host 0.0.0.0 --port 8000
 
 ---
 
-*Last updated: 2026-06-17*
+*Last updated: 2026-06-17 · SPR-021 types_importer implemented*
