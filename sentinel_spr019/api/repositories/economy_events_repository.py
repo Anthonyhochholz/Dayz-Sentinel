@@ -5,10 +5,11 @@ from sentinel_spr019.api.database import get_connection, dict_factory
 
 LOGGER = logging.getLogger(__name__)
 
-_EVENT_COLUMNS = """
-    event_name, nominal, min_count, max_count, lifetime, restock,
-    saferadius, distanceradius, cleanupradius, position_mode, limit_mode, active
-"""
+_SELECT_EVENT = (
+    "SELECT event_name, nominal, min_count, max_count, lifetime, restock,"
+    " saferadius, distanceradius, cleanupradius, position_mode, limit_mode, active"
+    " FROM economy_events"
+)
 
 
 class EconomyEventsRepository:
@@ -27,29 +28,29 @@ class EconomyEventsRepository:
         Returns:
             Tuple of (events list, total count)
         """
-        conn = get_connection()
-        conn.row_factory = dict_factory
+        conn = None
         try:
+            conn = get_connection()
+            conn.row_factory = dict_factory
             cursor = conn.cursor()
             if active_only:
                 cursor.execute("SELECT COUNT(*) as count FROM economy_events WHERE active = 1")
                 total = cursor.fetchone()["count"]
                 cursor.execute(
-                    f"SELECT {_EVENT_COLUMNS} FROM economy_events"
-                    " WHERE active = 1 ORDER BY event_name ASC LIMIT ? OFFSET ?",
+                    _SELECT_EVENT + " WHERE active = 1 ORDER BY event_name ASC LIMIT ? OFFSET ?",
                     (limit, offset),
                 )
             else:
                 cursor.execute("SELECT COUNT(*) as count FROM economy_events")
                 total = cursor.fetchone()["count"]
                 cursor.execute(
-                    f"SELECT {_EVENT_COLUMNS} FROM economy_events"
-                    " ORDER BY event_name ASC LIMIT ? OFFSET ?",
+                    _SELECT_EVENT + " ORDER BY event_name ASC LIMIT ? OFFSET ?",
                     (limit, offset),
                 )
             events = cursor.fetchall()
         finally:
-            conn.close()
+            if conn is not None:
+                conn.close()
         return events, total
 
     @staticmethod
@@ -63,17 +64,19 @@ class EconomyEventsRepository:
         Returns:
             Event dict or None
         """
-        conn = get_connection()
-        conn.row_factory = dict_factory
+        conn = None
         try:
+            conn = get_connection()
+            conn.row_factory = dict_factory
             cursor = conn.cursor()
             cursor.execute(
-                f"SELECT {_EVENT_COLUMNS} FROM economy_events WHERE event_name = ?",
+                _SELECT_EVENT + " WHERE event_name = ?",
                 (name,),
             )
             event = cursor.fetchone()
         finally:
-            conn.close()
+            if conn is not None:
+                conn.close()
         return event
 
     @staticmethod
@@ -90,34 +93,37 @@ class EconomyEventsRepository:
         Returns:
             List of matching events
         """
-        conn = get_connection()
-        conn.row_factory = dict_factory
+        conn = None
         try:
+            conn = get_connection()
+            conn.row_factory = dict_factory
             cursor = conn.cursor()
             if active_only:
                 cursor.execute(
-                    f"SELECT {_EVENT_COLUMNS} FROM economy_events"
-                    " WHERE event_name LIKE ? AND active = 1"
+                    _SELECT_EVENT
+                    + " WHERE event_name LIKE ? AND active = 1"
                     " ORDER BY event_name ASC LIMIT ? OFFSET ?",
                     (f"%{query}%", limit, offset),
                 )
             else:
                 cursor.execute(
-                    f"SELECT {_EVENT_COLUMNS} FROM economy_events"
-                    " WHERE event_name LIKE ?"
+                    _SELECT_EVENT
+                    + " WHERE event_name LIKE ?"
                     " ORDER BY event_name ASC LIMIT ? OFFSET ?",
                     (f"%{query}%", limit, offset),
                 )
             events = cursor.fetchall()
         finally:
-            conn.close()
+            if conn is not None:
+                conn.close()
         return events
 
     @staticmethod
     def get_count(active_only: bool = False) -> int:
         """Get total count of events."""
-        conn = get_connection()
+        conn = None
         try:
+            conn = get_connection()
             cursor = conn.cursor()
             if active_only:
                 cursor.execute("SELECT COUNT(*) FROM economy_events WHERE active = 1")
@@ -125,7 +131,8 @@ class EconomyEventsRepository:
                 cursor.execute("SELECT COUNT(*) FROM economy_events")
             count = cursor.fetchone()[0]
         finally:
-            conn.close()
+            if conn is not None:
+                conn.close()
         return count
 
     @staticmethod
@@ -139,8 +146,9 @@ class EconomyEventsRepository:
         Returns:
             New active status
         """
-        conn = get_connection()
+        conn = None
         try:
+            conn = get_connection()
             cursor = conn.cursor()
             cursor.execute("SELECT active FROM economy_events WHERE event_name = ?", (name,))
             result = cursor.fetchone()
@@ -153,5 +161,6 @@ class EconomyEventsRepository:
             )
             conn.commit()
         finally:
-            conn.close()
+            if conn is not None:
+                conn.close()
         return bool(new_status)

@@ -21,9 +21,10 @@ class EconomyItemsRepository:
         Returns:
             Tuple of (items list, total count)
         """
-        conn = get_connection()
-        conn.row_factory = dict_factory
+        conn = None
         try:
+            conn = get_connection()
+            conn.row_factory = dict_factory
             cursor = conn.cursor()
             cursor.execute("SELECT COUNT(*) as count FROM economy_items")
             total = cursor.fetchone()["count"]
@@ -38,7 +39,8 @@ class EconomyItemsRepository:
             )
             items = cursor.fetchall()
         finally:
-            conn.close()
+            if conn is not None:
+                conn.close()
         return items, total
 
     @staticmethod
@@ -52,9 +54,10 @@ class EconomyItemsRepository:
         Returns:
             Item dict or None
         """
-        conn = get_connection()
-        conn.row_factory = dict_factory
+        conn = None
         try:
+            conn = get_connection()
+            conn.row_factory = dict_factory
             cursor = conn.cursor()
             cursor.execute(
                 """
@@ -66,7 +69,8 @@ class EconomyItemsRepository:
             )
             item = cursor.fetchone()
         finally:
-            conn.close()
+            if conn is not None:
+                conn.close()
         return item
 
     @staticmethod
@@ -82,9 +86,10 @@ class EconomyItemsRepository:
         Returns:
             List of matching items
         """
-        conn = get_connection()
-        conn.row_factory = dict_factory
+        conn = None
         try:
+            conn = get_connection()
+            conn.row_factory = dict_factory
             cursor = conn.cursor()
             cursor.execute(
                 """
@@ -98,17 +103,20 @@ class EconomyItemsRepository:
             )
             items = cursor.fetchall()
         finally:
-            conn.close()
+            if conn is not None:
+                conn.close()
         return items
 
     @staticmethod
     def get_count() -> int:
         """Get total count of items."""
-        conn = get_connection()
+        conn = None
         try:
+            conn = get_connection()
             cursor = conn.cursor()
             cursor.execute("SELECT COUNT(*) FROM economy_items")
             count = cursor.fetchone()[0]
         finally:
-            conn.close()
+            if conn is not None:
+                conn.close()
         return count
