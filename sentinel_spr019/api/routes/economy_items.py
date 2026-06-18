@@ -1,7 +1,9 @@
+import logging
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
-from sentinel_spr019.api.models.economy_item import EconomyItemResponse
 from sentinel_spr019.api.repositories.economy_items_repository import EconomyItemsRepository
+
+LOGGER = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/economy", tags=["economy-items"])
 
@@ -13,17 +15,17 @@ async def get_items(
     search: Optional[str] = Query(None)
 ):
     """
-    Get all economy items with pagination and optional search
-    
+    Get all economy items with pagination and optional search.
+
     - **limit**: Number of items to return (1-1000, default 50)
     - **offset**: Number of items to skip (default 0)
     - **search**: Optional search query to filter items by name
-    
-    Returns paginated list of items with total count
+
+    Returns paginated list of items with total count.
     """
     try:
         if search:
-            items = EconomyItemsRepository.search(search, limit)
+            items = EconomyItemsRepository.search(search, limit, offset)
             return {
                 "data": items,
                 "total": len(items),
@@ -40,17 +42,18 @@ async def get_items(
                 "offset": offset
             }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        LOGGER.exception("Error in get_items")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/items/{item_name}", response_model=dict)
 async def get_item(item_name: str):
     """
-    Get a specific economy item by name
-    
+    Get a specific economy item by name.
+
     - **item_name**: The name of the item to retrieve
-    
-    Returns item details or 404 if not found
+
+    Returns item details or 404 if not found.
     """
     try:
         item = EconomyItemsRepository.get_by_name(item_name)
@@ -63,18 +66,20 @@ async def get_item(item_name: str):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        LOGGER.exception("Error in get_item: %s", item_name)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/items/stats/count", response_model=dict)
 async def get_items_count():
     """
-    Get total count of economy items
-    
-    Returns the total number of items in the database
+    Get total count of economy items.
+
+    Returns the total number of items in the database.
     """
     try:
         count = EconomyItemsRepository.get_count()
         return {"total": count}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        LOGGER.exception("Error in get_items_count")
+        raise HTTPException(status_code=500, detail="Internal server error")

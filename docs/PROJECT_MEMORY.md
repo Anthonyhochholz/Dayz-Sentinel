@@ -33,12 +33,11 @@
 | Economy Items | ✅ Ready | 1,917 items imported from `types.xml` |
 | Economy Events | ✅ Ready | 58 events imported from `events.xml` |
 | Database Schema | ✅ Ready | SQLite `sentinel_v1_schema.sql` + `rev2` deployed |
-| Docker | ✅ Ready | `Dockerfile` + `docker-compose.yml` present |
+| Docker | ✅ Ready | `Dockerfile` + `docker-compose.yml` present; `API_PORT` reads from `.env` |
 | Authentication | ❌ Missing | No auth on write endpoints (AUDIT-001) |
 | Tests | ✅ Added | `tests/test_types_importer.py` — 21 pytest unit tests; no running API needed |
 | `types_importer.py` | ✅ Implemented | `importer/economy/types_importer.py` — upsert strategy, full transaction, flags + relations |
-| Tests (`pytest`) | ✅ Added | `tests/test_types_importer.py` — 21 unit tests with in-memory SQLite |
-| `economy_repository.py` | ⚠️ Dead Code | Exists at `api/repositories/economy_repository.py`; not imported or used anywhere |
+| `economy_repository.py` | ✅ Removed | Dead code removed (was at `api/repositories/economy_repository.py`) |
 
 ---
 
@@ -47,8 +46,6 @@
 - **File location (in container):** `/app/sentinel_spr019/database/sqlite/sentinel.db`
 - **Volume mount:** `./sentinel_spr019/database/sqlite` → `/app/sentinel_spr019/database/sqlite`
 - **Schema files:** `sentinel_spr019/database/schema/sentinel_v1_schema.sql`, `sentinel_v1_schema_rev2.sql`
-
-> ⚠️ **Schema vs. Live DB Discrepancy:** `sentinel_v1_schema.sql` defines `economy_items` with columns `item_name`, `min_count`, `quantmin`, `quantmax`, `cost`. However, the API repositories query columns `name`, `min_value`, `max_value`, which is what the live `sentinel.db` actually contains. The original schema file reflects an earlier design iteration; the deployed DB schema diverged from it without a migration file.
 
 ### Populated Tables
 
@@ -95,18 +92,18 @@
 | ID | Severity | Summary | Status |
 |----|----------|---------|--------|
 | AUDIT-001 | 🔴 Critical | No auth on `toggle-active` POST endpoint | Open |
-| AUDIT-002 | 🔴 Critical | Internal error details leaked in HTTP 500 responses (`detail=str(e)` in all route handlers) | Open |
-| AUDIT-003 | 🟠 High | DB connection leaks — `get_connection()` returns a raw `sqlite3.Connection`; no context manager; no `try/finally` in repositories | Open |
-| AUDIT-004 | 🟠 High | f-String SQL interpolation in `economy_events_repository.py` (lines 30, 36–44, 107–114, 130) — Bandit B608 alert | Open |
-| AUDIT-005 | 🟠 High | `API_PORT` defined in `.env.example` and hardcoded in `docker-compose.yml` and `Dockerfile` — `.env` is never loaded | Open |
-| AUDIT-006 | 🟡 Medium | `dict_factory` duplicated in `economy_items_repository.py:128` and `economy_events_repository.py:177`; not in `database.py` | Open |
-| AUDIT-007 | 🟡 Medium | `economy_repository.py` is dead code — not imported or used anywhere | Open |
-| AUDIT-008 | 🟡 Medium | `requests` missing from `requirements.txt` (used in `scripts/test_api.py`) | Open |
-| AUDIT-009 | 🟢 Resolved | `scripts/test_import_run.py` import path is correct; `types_importer.py` implemented | Open |
-| AUDIT-010 | 🟡 Medium | `offset` parameter accepted by search routes but ignored in `EconomyItemsRepository.search()` and `EconomyEventsRepository.search()` | Open |
-| AUDIT-011 | 🟡 Medium | Package name contains sprint number (`sentinel_spr019`) — not a stable package name | Open |
+| AUDIT-002 | 🔴 Critical | Internal error details leaked in HTTP 500 responses (`detail=str(e)` in all route handlers) | ✅ Resolved — generic messages + server-side logging |
+| AUDIT-003 | 🟠 High | DB connection leaks — repositories now use `try/finally` blocks | ✅ Resolved |
+| AUDIT-004 | 🟠 High | f-String SQL interpolation in `economy_events_repository.py` — replaced with safe conditional queries | ✅ Resolved |
+| AUDIT-005 | 🟠 High | `API_PORT` now read from `.env` via `${API_PORT:-8000}` in `docker-compose.yml` | ✅ Resolved |
+| AUDIT-006 | 🟡 Medium | `dict_factory` centralized in `database.py`; removed from repository files | ✅ Resolved |
+| AUDIT-007 | 🟡 Medium | `economy_repository.py` deleted (dead code) | ✅ Resolved |
+| AUDIT-008 | 🟡 Medium | `requests` added to `requirements.txt` | ✅ Resolved |
+| AUDIT-009 | 🟢 Resolved | `scripts/test_import_run.py` import path correct; `types_importer.py` implemented | ✅ Resolved |
+| AUDIT-010 | 🟡 Medium | `offset` now passed to `search()` in both repositories | ✅ Resolved |
+| AUDIT-011 | 🔵 Low | Package name contains sprint number (`sentinel_spr019`) — not a stable package name | Open |
 | AUDIT-012 | 🔵 Low | No CORS middleware | Open |
-| AUDIT-013 | 🔵 Low | README contains incorrect endpoint docs | Open |
+| AUDIT-013 | 🔵 Low | README endpoint docs fixed (correct health path, removed phantom `?type=` param) | ✅ Resolved |
 
 > Full details: [`copilot-audits/full_project_audit.md`](./copilot-audits/full_project_audit.md)
 
@@ -130,7 +127,7 @@
 |---------|---------|---------|
 | `fastapi` | unpinned | Web framework |
 | `uvicorn[standard]` | unpinned | ASGI server |
-| `requests` | missing ⚠️ | Used in `scripts/test_api.py` — not in `requirements.txt` |
+| `requests` | unpinned | HTTP client — used in `scripts/test_api.py` |
 
 ---
 
