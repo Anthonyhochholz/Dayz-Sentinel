@@ -72,8 +72,8 @@ Follow the setup guide in [CASAOS_INSTALL.md](./CASAOS_INSTALL.md)
 
 ### Health Check
 ```bash
-GET /health
-# Response: {"status": "operational"}
+GET /api/v1/health
+# Response: {"status": "ok"}
 ```
 
 ### Economy Items
@@ -81,11 +81,11 @@ GET /health
 # Get all items with pagination
 GET /api/v1/economy/items?limit=50&offset=0
 
+# Search items by name
+GET /api/v1/economy/items?search=rifle&limit=20
+
 # Get specific item
 GET /api/v1/economy/items/{item_name}
-
-# Filter by type
-GET /api/v1/economy/items?type=weapon&limit=20
 ```
 
 ### Economy Events
@@ -167,8 +167,8 @@ API_PORT=8000                 # API port
 
 ### Run Tests
 ```bash
-# Unit tests (coming soon)
-pytest tests/
+# Unit tests
+python -m pytest -q tests/
 ```
 
 ### Add New Endpoints

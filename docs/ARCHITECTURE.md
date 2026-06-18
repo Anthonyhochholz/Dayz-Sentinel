@@ -59,7 +59,6 @@ DayZ Sentinel is a single-container, self-hosted REST API. It imports DayZ serve
 | | `sentinel_spr019/api/models/economy_event.py` | Pydantic schemas: `EconomyEventBase`, `EconomyEvent`, `EconomyEventResponse` |
 | **Repositories** | `sentinel_spr019/api/repositories/economy_items_repository.py` | `get_all()`, `get_by_name()`, `search()`, `get_count()` |
 | | `sentinel_spr019/api/repositories/economy_events_repository.py` | `get_all()`, `get_by_name()`, `search()`, `get_count()`, `toggle_active()` |
-| | `sentinel_spr019/api/repositories/economy_repository.py` | ⚠️ **Dead code** — `EconomyRepository.get_items()`; not imported or used anywhere (AUDIT-007) |
 | **DB Connection** | `sentinel_spr019/api/database.py` | `get_connection()` → `sqlite3.connect(db_path)` — returns raw connection, no context manager (AUDIT-003) |
 | **Importer** | `sentinel_spr019/importer/economy/events_importer.py` | XML parse → `INSERT INTO economy_events` |
 | | `sentinel_spr019/importer/economy/types_importer.py` | XML parse → upsert into `economy_items` + flags/categories/usages/values/tags |
@@ -77,15 +76,13 @@ DayZ Sentinel is a single-container, self-hosted REST API. It imports DayZ serve
 Client
   └─▶ GET /api/v1/economy/items?limit=50&search=rifle
         └─▶ economy_items.py :: get_items(limit, offset, search)
-              └─▶ EconomyItemsRepository.search("rifle", 50)
+              └─▶ EconomyItemsRepository.search("rifle", 50, 0)
                     └─▶ get_connection() → sqlite3.connect(sentinel.db)
                           └─▶ SELECT name, nominal, min_value, max_value, restock, lifetime
-                              FROM economy_items WHERE name LIKE '%rifle%' LIMIT 50
+                              FROM economy_items WHERE name LIKE '%rifle%' LIMIT 50 OFFSET 0
                                 └─▶ List[dict]
                                       └─▶ JSON { data: [...], total: N, limit: 50, offset: 0 }
 ```
-
-> ⚠️ `offset` is accepted as a query parameter in the search branch but is **not passed** to `EconomyItemsRepository.search()` or `EconomyEventsRepository.search()` — it is silently ignored (AUDIT-010).
 
 ### 3.2 Write Flow (POST toggle)
 
@@ -115,8 +112,6 @@ DayZ Server Files
 ---
 
 ## 4. Database Schema
-
-> ⚠️ **Schema vs. Live DB Discrepancy:** `sentinel_v1_schema.sql` defines `economy_items` with columns `item_name`, `min_count`, `quantmin`, `quantmax`, `cost`. The running API repositories query `name`, `min_value`, `max_value` instead — matching the actual `sentinel.db`. The schema file reflects an earlier iteration that was never updated to match the deployed database.
 
 ### 4.1 Core Economy Tables (as queried by the API)
 
@@ -220,8 +215,7 @@ economy_events
 | Variable | Default | Source | Used |
 |----------|---------|--------|------|
 | `TZ` | `Europe/Berlin` | `.env.example` | ✅ Docker (must be copied to `.env`) |
-| `API_PORT` | `8000` | `.env.example` | ⚠️ Hardcoded in `docker-compose.yml` and `Dockerfile` — `.env` is never loaded (AUDIT-005) |
-| `SENTINEL_API_KEY` | — | `.env.example` | ❌ Not implemented yet (AUDIT-001) |
+| `API_PORT` | `8000` | `.env.example` | ✅ Read via `${API_PORT:-8000}` in `docker-compose.yml` |
 
 ---
 
@@ -250,9 +244,8 @@ uvicorn sentinel_spr019.api.main:app --host 0.0.0.0 --port 8000
 
 | Issue | Location | Impact |
 |-------|----------|--------|
-| `dict_factory` duplicated | `economy_items_repository.py:128`, `economy_events_repository.py:177` | Should be in `database.py` (AUDIT-006) |
-| No context manager on DB connections | All 3 repository files + `database.py` | Connection leaks on unhandled exceptions (AUDIT-003) |
-| f-String SQL interpolation | `economy_events_repository.py:30,36–44,107–114,130` | SQL injection risk (AUDIT-004) |
+| No authentication on write endpoints | `economy_events.py` toggle-active | AUDIT-001 — open |
+| No context manager on DB connections in `database.py` | `database.py` | AUDIT-003 — partially addressed; repositories now use try/finally |
 | `response_model=dict` on all routes | All route handlers | No OpenAPI response schema validation |
 
 ---
