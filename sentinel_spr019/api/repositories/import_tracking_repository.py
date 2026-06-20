@@ -315,6 +315,24 @@ class ImportTrackingRepository:
             conn.close()
 
     @staticmethod
+    def has_completed_run_for_version(
+        source_id: int,
+        importer_version: str,
+        db_path: str | None = None,
+    ) -> bool:
+        """Return True if a completed import run exists for *source_id* with the given *importer_version*."""
+        conn = get_connection(db_path)
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT 1 FROM import_runs WHERE source_id = ? AND status = 'completed' AND importer_version = ?",
+                (source_id, importer_version),
+            )
+            return cursor.fetchone() is not None
+        finally:
+            conn.close()
+
+    @staticmethod
     def list_runs(limit: int, offset: int, db_path: str | None = None) -> list[dict]:
         conn = get_connection(db_path)
         try:

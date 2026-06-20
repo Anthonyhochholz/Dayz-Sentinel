@@ -38,8 +38,8 @@ def classify_file(file_path: str | Path) -> FileClassification:
     if suffix == ".adm":
         return FileClassification(
             file_type="adm_log",
-            should_import=False,
-            reason="adm log support is planned but not implemented",
+            should_import=True,
+            reason="adm log matched by extension",
         )
 
     if suffix == ".rpt":
