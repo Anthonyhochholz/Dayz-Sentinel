@@ -96,7 +96,9 @@ def run_mirror_import(mirror_root: str, db_file: str | None = None) -> dict:
             file_type = discovered.classification.file_type
             run_importer_version = _importer_version_for_file(file_type, discovered.absolute_path)
 
-            if ImportTrackingRepository.has_completed_run_for_version(
+            # ADM log files manage their own per-row idempotency; always attempt
+            # import so that appended content is picked up on each scan.
+            if file_type != "adm_log" and ImportTrackingRepository.has_completed_run_for_version(
                 source_id, run_importer_version, database_path
             ):
                 skipped += 1
