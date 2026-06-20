@@ -1,4 +1,6 @@
 import hashlib
+import importlib
+import importlib.util
 from pathlib import Path
 
 from sentinel_spr019.api.repositories.import_tracking_repository import ImportTrackingRepository
@@ -6,9 +8,17 @@ from sentinel_spr019.importer.economy.events_importer import import_events
 from sentinel_spr019.importer.economy.types_importer import import_types
 from sentinel_spr019.importer.mirror_scanner import scan_mirror
 
+_ADM_IMPORTER_MODULE = "sentinel_spr019.importer.logs.adm_importer"
 try:
-    from sentinel_spr019.importer.logs.adm_importer import import_adm, importer_version_for_hash
-except ModuleNotFoundError:  # pragma: no cover - optional importer in partial environments
+    _adm_importer_spec = importlib.util.find_spec(_ADM_IMPORTER_MODULE)
+except ModuleNotFoundError:  # pragma: no cover - optional importer
+    _adm_importer_spec = None
+
+if _adm_importer_spec is not None:  # pragma: no cover - optional importer
+    _adm_importer_module = importlib.import_module(_ADM_IMPORTER_MODULE)
+    import_adm = _adm_importer_module.import_adm
+    importer_version_for_hash = _adm_importer_module.importer_version_for_hash
+else:
     import_adm = None
     importer_version_for_hash = None
 
@@ -115,7 +125,10 @@ def run_mirror_import(mirror_root: str, db_file: str | None = None) -> dict:
                     import_events(discovered.absolute_path, database_path)
                 elif discovered.classification.file_type == "adm_log":
                     if import_adm is None:
-                        raise RuntimeError("ADM importer is not available in this environment")
+                        raise RuntimeError(
+                            "ADM importer module is not available. "
+                            "Ensure sentinel_spr019.importer.logs.adm_importer is installed and accessible."
+                        )
                     import_adm(discovered.absolute_path, database_path)
                 else:
                     raise RuntimeError(f"No importer configured for file type: {file_type}")
