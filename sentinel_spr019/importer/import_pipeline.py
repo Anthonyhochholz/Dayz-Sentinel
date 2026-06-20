@@ -1,12 +1,12 @@
 import hashlib
 import importlib
 import importlib.util
-import os
 from pathlib import Path
 
 from sentinel_spr019.api.repositories.import_tracking_repository import ImportTrackingRepository
 from sentinel_spr019.importer.economy.events_importer import import_events
 from sentinel_spr019.importer.economy.types_importer import import_types
+from sentinel_spr019.importer.mirror_root import resolve_mirror_root
 from sentinel_spr019.importer.mirror_scanner import scan_mirror
 
 _ADM_IMPORTER_MODULE = "sentinel_spr019.importer.logs.adm_importer"
@@ -36,13 +36,6 @@ def _default_db_path() -> str:
     return str(Path(__file__).resolve().parents[1] / "database" / "sqlite" / "sentinel.db")
 
 
-def _resolve_mirror_root(mirror_root: str | Path | None) -> str:
-    configured_root = mirror_root if mirror_root is not None else os.getenv("MIRROR_ROOT")
-    if configured_root is None or str(configured_root).strip() == "":
-        raise ValueError("Mirror root is required. Set MIRROR_ROOT or pass mirror_root explicitly.")
-    return str(Path(configured_root).expanduser().resolve())
-
-
 def _compute_file_hash(file_path: str) -> str:
     """Return the SHA-256 digest for a file path using chunked reads."""
     digest = hashlib.sha256()
@@ -61,7 +54,7 @@ def _importer_version_for_file(file_type: str, absolute_path: str) -> str:
 
 
 def run_mirror_import(mirror_root: str | Path | None = None, db_file: str | None = None) -> dict:
-    resolved_mirror_root = _resolve_mirror_root(mirror_root)
+    resolved_mirror_root = resolve_mirror_root(mirror_root)
     database_path = db_file or _default_db_path()
     discovered_files = scan_mirror(resolved_mirror_root)
 
