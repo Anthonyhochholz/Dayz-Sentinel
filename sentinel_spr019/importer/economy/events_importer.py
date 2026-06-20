@@ -77,7 +77,13 @@ def import_events(xml_file, db_file):
     finally:
         conn.close()
 
-    print(f"import_events: inserted={inserted}, updated={updated}, skipped={skipped}")
+    LOGGER.info(
+        "import_events complete for %s: inserted=%s updated=%s skipped=%s",
+        xml_file,
+        inserted,
+        updated,
+        skipped,
+    )
     return inserted, updated, skipped
 
 

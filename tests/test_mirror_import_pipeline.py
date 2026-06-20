@@ -77,8 +77,11 @@ def test_run_mirror_import_tracks_scan_classification_and_imports(tmp_path):
     assert summary["files_failed"] == 0
 
     with sqlite3.connect(db) as conn:
-        scan = conn.execute("SELECT status FROM mirror_scans WHERE id = ?", (summary["scan_id"],)).fetchone()
-        assert scan == ("completed",)
+        scan_status = conn.execute(
+            "SELECT status FROM mirror_scans WHERE id = ?",
+            (summary["scan_id"],),
+        ).fetchone()[0]
+        assert scan_status == "completed"
 
         item_count = conn.execute("SELECT COUNT(*) FROM economy_items WHERE name = 'AKM'").fetchone()[0]
         event_count = conn.execute("SELECT COUNT(*) FROM economy_events WHERE event_name = 'ZmbM_Test'").fetchone()[0]
