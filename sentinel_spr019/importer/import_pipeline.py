@@ -3,6 +3,7 @@ from pathlib import Path
 from sentinel_spr019.api.repositories.import_tracking_repository import ImportTrackingRepository
 from sentinel_spr019.importer.economy.events_importer import import_events
 from sentinel_spr019.importer.economy.types_importer import import_types
+from sentinel_spr019.importer.logs.adm_importer import compute_file_hash, import_adm, importer_version_for_hash
 from sentinel_spr019.importer.mirror_scanner import scan_mirror
 
 
@@ -58,9 +59,28 @@ def run_mirror_import(mirror_root: str, db_file: str | None = None) -> dict:
                 )
                 continue
 
+            # For ADM files, resolve the file hash and skip if already imported.
+            file_type = discovered.classification.file_type
+            if file_type == "adm_log":
+                file_hash = compute_file_hash(discovered.absolute_path)
+                adm_version = importer_version_for_hash(file_hash)
+                if ImportTrackingRepository.has_completed_run_for_version(
+                    source_id, adm_version, database_path
+                ):
+                    imported += 1
+                    ImportTrackingRepository.update_scan_file_status(
+                        scan_file_id=scan_file_id,
+                        import_status="imported",
+                        db_path=database_path,
+                    )
+                    continue
+                run_importer_version = adm_version
+            else:
+                run_importer_version = IMPORTER_VERSION
+
             run_id = ImportTrackingRepository.create_import_run(
                 source_id=source_id,
-                importer_version=IMPORTER_VERSION,
+                importer_version=run_importer_version,
                 db_path=database_path,
             )
             ImportTrackingRepository.attach_import_run(
@@ -74,6 +94,8 @@ def run_mirror_import(mirror_root: str, db_file: str | None = None) -> dict:
                     import_types(discovered.absolute_path, database_path)
                 elif discovered.classification.file_type == "economy_events_xml":
                     import_events(discovered.absolute_path, database_path)
+                elif discovered.classification.file_type == "adm_log":
+                    import_adm(discovered.absolute_path, database_path)
             except Exception as exc:
                 failed += 1
                 ImportTrackingRepository.finish_import_run(run_id, "failed", db_path=database_path)
