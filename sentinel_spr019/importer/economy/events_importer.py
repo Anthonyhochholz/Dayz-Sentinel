@@ -81,21 +81,21 @@ def import_events(xml_file, db_file):
     return inserted, updated, skipped
 
 
-def _parse_int(value, field_name: str) -> int | None:
+def _parse_int(value, field_label: str) -> int | None:
     """Parse integer values while preserving NULL semantics for empty fields."""
     if value in (None, ""):
         return None
     try:
         return int(value)
     except ValueError as exc:
-        raise ValueError(f"Invalid integer for field '{field_name}': {value}") from exc
+        raise ValueError(f"Invalid integer for field '{field_label}': {value}") from exc
 
 
-def _parse_float(value, field_name: str) -> float | None:
+def _parse_float(value, field_label: str) -> float | None:
     """Parse float values while preserving NULL semantics for empty fields."""
     if value in (None, ""):
         return None
     try:
         return float(value)
     except ValueError as exc:
-        raise ValueError(f"Invalid float for field '{field_name}': {value}") from exc
+        raise ValueError(f"Invalid float for field '{field_label}': {value}") from exc
