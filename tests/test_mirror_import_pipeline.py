@@ -96,3 +96,75 @@ def test_run_mirror_import_tracks_scan_classification_and_imports(tmp_path):
 
         run_statuses = [row[0] for row in conn.execute("SELECT status FROM import_runs ORDER BY id ASC").fetchall()]
         assert run_statuses == ["completed", "completed"]
+
+
+def test_run_mirror_import_tracks_failed_imports(tmp_path):
+    mirror_root = tmp_path / "mirror"
+    mirror_root.mkdir()
+    db = str(tmp_path / "sentinel.db")
+    _apply_schema(db)
+
+    (mirror_root / "types.xml").write_text(
+        textwrap.dedent(
+            """\
+            <types>
+              <type name="M4A1">
+                <nominal>2</nominal>
+                <lifetime>1200</lifetime>
+                <restock>100</restock>
+                <quantmin>1</quantmin>
+                <quantmax>1</quantmax>
+              </type>
+            </types>
+            """
+        ),
+        encoding="utf-8",
+    )
+    (mirror_root / "events.xml").write_text(
+        textwrap.dedent(
+            """\
+            <events>
+              <event name="ZmbBroken">
+                <nominal>abc</nominal>
+                <min>1</min>
+                <max>2</max>
+                <lifetime>300</lifetime>
+                <restock>30</restock>
+                <saferadius>10</saferadius>
+                <distanceradius>20</distanceradius>
+                <cleanupradius>30</cleanupradius>
+                <position>fixed</position>
+                <limit>child</limit>
+                <active>1</active>
+              </event>
+            </events>
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    summary = run_mirror_import(str(mirror_root), db_file=db)
+    assert summary["status"] == "completed_with_errors"
+    assert summary["files_discovered"] == 2
+    assert summary["files_imported"] == 1
+    assert summary["files_unsupported"] == 0
+    assert summary["files_failed"] == 1
+
+    with sqlite3.connect(db) as conn:
+        statuses = dict(
+            conn.execute(
+                "SELECT relative_path, import_status FROM mirror_scan_files WHERE scan_id = ?",
+                (summary["scan_id"],),
+            ).fetchall()
+        )
+        assert statuses["types.xml"] == "imported"
+        assert statuses["events.xml"] == "failed"
+
+        error_message = conn.execute(
+            "SELECT error_message FROM mirror_scan_files WHERE scan_id = ? AND relative_path = 'events.xml'",
+            (summary["scan_id"],),
+        ).fetchone()[0]
+        assert "Invalid integer for field 'nominal'" in error_message
+
+        run_statuses = sorted(row[0] for row in conn.execute("SELECT status FROM import_runs").fetchall())
+        assert run_statuses == ["completed", "failed"]

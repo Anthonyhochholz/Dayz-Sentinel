@@ -74,8 +74,6 @@ def run_mirror_import(mirror_root: str, db_file: str | None = None) -> dict:
                     import_types(discovered.absolute_path, database_path)
                 elif discovered.classification.file_type == "economy_events_xml":
                     import_events(discovered.absolute_path, database_path)
-                else:
-                    raise ValueError(f"Unsupported importable file type: {discovered.classification.file_type}")
             except Exception as exc:
                 failed += 1
                 ImportTrackingRepository.finish_import_run(run_id, "failed", db_path=database_path)

@@ -1,5 +1,8 @@
+import logging
 import sqlite3
 import xml.etree.ElementTree as ET
+
+LOGGER = logging.getLogger(__name__)
 
 
 def import_events(xml_file, db_file):
@@ -22,20 +25,21 @@ def import_events(xml_file, db_file):
             name = event.get("name")
             if not name:
                 skipped += 1
+                LOGGER.warning("Skipping event without name in %s", xml_file)
                 continue
 
             payload = (
-                _parse_int(event.findtext("nominal")),
-                _parse_int(event.findtext("min")),
-                _parse_int(event.findtext("max")),
-                _parse_int(event.findtext("lifetime")),
-                _parse_int(event.findtext("restock")),
-                _parse_float(event.findtext("saferadius")),
-                _parse_float(event.findtext("distanceradius")),
-                _parse_float(event.findtext("cleanupradius")),
+                _parse_int(event.findtext("nominal"), "nominal"),
+                _parse_int(event.findtext("min"), "min"),
+                _parse_int(event.findtext("max"), "max"),
+                _parse_int(event.findtext("lifetime"), "lifetime"),
+                _parse_int(event.findtext("restock"), "restock"),
+                _parse_float(event.findtext("saferadius"), "saferadius"),
+                _parse_float(event.findtext("distanceradius"), "distanceradius"),
+                _parse_float(event.findtext("cleanupradius"), "cleanupradius"),
                 event.findtext("position"),
                 event.findtext("limit"),
-                _parse_int(event.findtext("active")),
+                _parse_int(event.findtext("active"), "active"),
                 name,
             )
 
@@ -77,15 +81,21 @@ def import_events(xml_file, db_file):
     return inserted, updated, skipped
 
 
-def _parse_int(value) -> int | None:
+def _parse_int(value, field_name: str) -> int | None:
     """Parse integer values while preserving NULL semantics for empty fields."""
     if value in (None, ""):
         return None
-    return int(value)
+    try:
+        return int(value)
+    except ValueError as exc:
+        raise ValueError(f"Invalid integer for field '{field_name}': {value}") from exc
 
 
-def _parse_float(value) -> float | None:
+def _parse_float(value, field_name: str) -> float | None:
     """Parse float values while preserving NULL semantics for empty fields."""
     if value in (None, ""):
         return None
-    return float(value)
+    try:
+        return float(value)
+    except ValueError as exc:
+        raise ValueError(f"Invalid float for field '{field_name}': {value}") from exc
