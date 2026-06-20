@@ -4,23 +4,22 @@ Architecture Decision Records (ADRs) for DayZ Sentinel.
 
 ---
 
-## What is an ADR?
+## ADR Layout
 
-An Architecture Decision Record captures an important technical decision, its context, the alternatives considered, and the rationale for the chosen approach. ADRs are immutable — once a decision is superseded, a new ADR is created rather than modifying the old one.
+- `architecture_decisions.md` is the legacy consolidated ADR record for early project decisions.
+- Standalone ADR files such as `ADR-0001-economy-items-schema.md` are the preferred format for newer decisions.
+- Historical ADRs are retained as records; current implementation status belongs in `docs/PROJECT_MEMORY.md` and `docs/ROADMAP.md`.
 
 ---
 
 ## Records
 
-| ID | Title | Status | Date |
-|----|-------|--------|------|
-| ADR-001 | Use SQLite as primary database | ✅ Accepted | 2026-06 |
-| ADR-002 | Use Repository pattern for data access | ✅ Accepted | 2026-06 |
-| ADR-003 | Sprint-numbered Python package | ⚠️ Deprecated | 2026-06 |
-| ADR-004 | FastAPI over Flask/Django | ✅ Accepted | 2026-06 |
-
-> Full details: [`architecture_decisions.md`](./architecture_decisions.md)
+| ID | Title | Status | Date | Location |
+|----|-------|--------|------|----------|
+| ADR-0001 | Economy items schema | ✅ Accepted | 2026-06-17 | `ADR-0001-economy-items-schema.md` |
+| ADR-001 | Use SQLite as primary database | ✅ Accepted | 2026-06 | `architecture_decisions.md` |
+| ADR-002 | Use repository pattern for data access | ✅ Accepted | 2026-06 | `architecture_decisions.md` |
+| ADR-003 | Sprint-numbered Python package | ⚠️ Deprecated | 2026-06 | `architecture_decisions.md` |
+| ADR-004 | FastAPI over Flask/Django | ✅ Accepted | 2026-06 | `architecture_decisions.md` |
 
 ---
-
-*Last updated: 2026-06-17*

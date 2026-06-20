@@ -8,12 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Planned
-- API-Key authentication for write endpoints (P1-001)
-- Generic error responses without internal detail (P1-002)
-- SQLite connection context managers (P1-003)
-- Parameterized SQL queries replacing f-String interpolation (P1-004)
-- `.env`-based `API_PORT` in Docker setup (P1-005)
+### Changed
+- Consolidated documentation into canonical sources:
+  - `README.md` for installation, quick start, and API usage
+  - `docs/PROJECT_MEMORY.md` for current state and important facts
+  - `docs/ROADMAP.md` for future work only
+  - `docs/ARCHITECTURE.md` for architecture only
+  - `docs/CHANGELOG.md` for historical changes only
+- Archived SPR-020 and SPR-021 as historical sprint summaries with carry-over work moved to the roadmap.
+- Simplified the sprint backlog so it no longer duplicates roadmap detail.
+- Clarified the ADR index to distinguish the legacy consolidated ADR file from standalone ADR records.
+
+### Removed
+- Deleted redundant status, audit, and review documents after merging current findings into the canonical docs.
 
 ---
 
@@ -28,8 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Populates `economy_values` / `economy_item_values` (M:N)
   - Populates `economy_tags` / `economy_item_tags` (M:N)
   - Full transaction wrapping — any failure rolls back the entire import
-  - Defensive schema migration: renames legacy columns (`item_name → name`,
-    `quantmin → min_value`, `quantmax → max_value`) on first run if found
+  - Defensive schema migration: renames legacy columns (`item_name → name`, `quantmin → min_value`, `quantmax → max_value`) on first run if found
 - `tests/test_types_importer.py` — 21 pytest unit tests (all passing)
   - Tests: basic insert, upsert strategy, flags, categories, usages, values, tags,
     multiple relations, transaction rollback, schema migration, large import (100 items)
@@ -91,7 +97,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-[Unreleased]: https://github.com/Anthonyhochholz/Dayz-Sentinel/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/Anthonyhochholz/Dayz-Sentinel/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/Anthonyhochholz/Dayz-Sentinel/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Anthonyhochholz/Dayz-Sentinel/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Anthonyhochholz/Dayz-Sentinel/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Anthonyhochholz/Dayz-Sentinel/releases/tag/v0.1.0
