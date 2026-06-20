@@ -1,4 +1,4 @@
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 
 from sentinel_spr019.api.database import dict_factory, get_connection
 
@@ -6,7 +6,7 @@ from sentinel_spr019.api.database import dict_factory, get_connection
 class ImportTrackingRepository:
     @staticmethod
     def _now() -> str:
-        return datetime.now(UTC).isoformat()
+        return datetime.now(timezone.utc).isoformat()
 
     @staticmethod
     def _ensure_schema(conn) -> None:

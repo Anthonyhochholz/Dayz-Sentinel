@@ -1,6 +1,10 @@
+import logging
+
 from fastapi import APIRouter, HTTPException, Query
 
 from sentinel_spr019.api.repositories.import_tracking_repository import ImportTrackingRepository
+
+LOGGER = logging.getLogger(__name__)
 
 
 router = APIRouter(prefix="/api/v1/import-tracking", tags=["import-tracking"])
@@ -15,6 +19,7 @@ async def get_scans(
         scans = ImportTrackingRepository.list_scans(limit=limit, offset=offset)
         return {"data": scans, "limit": limit, "offset": offset}
     except Exception:
+        LOGGER.exception("Error in get_scans")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -28,6 +33,7 @@ async def get_scan(scan_id: int):
     except HTTPException:
         raise
     except Exception:
+        LOGGER.exception("Error in get_scan: %s", scan_id)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -41,6 +47,7 @@ async def get_scan_files(
         files = ImportTrackingRepository.list_scan_files(scan_id=scan_id, limit=limit, offset=offset)
         return {"data": files, "scan_id": scan_id, "limit": limit, "offset": offset}
     except Exception:
+        LOGGER.exception("Error in get_scan_files: %s", scan_id)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -53,4 +60,5 @@ async def get_runs(
         runs = ImportTrackingRepository.list_runs(limit=limit, offset=offset)
         return {"data": runs, "limit": limit, "offset": offset}
     except Exception:
+        LOGGER.exception("Error in get_runs")
         raise HTTPException(status_code=500, detail="Internal server error")

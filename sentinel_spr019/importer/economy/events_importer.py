@@ -78,12 +78,14 @@ def import_events(xml_file, db_file):
 
 
 def _parse_int(value):
+    """Parse integer values while preserving NULL semantics for empty fields."""
     if value in (None, ""):
         return None
     return int(value)
 
 
 def _parse_float(value):
+    """Parse float values while preserving NULL semantics for empty fields."""
     if value in (None, ""):
         return None
     return float(value)
