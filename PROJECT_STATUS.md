@@ -2,7 +2,94 @@
 
 > **Version:** 0.4.0 (SPR-021)  
 > **Last Updated:** 2026-06-20  
+> **Audit Date:** 2026-06-20  
 > **Status:** Active Development — Security & API Stability Sprint in Progress (SPR-020/021)
+
+---
+
+## Feature Status by Category
+
+### ✅ COMPLETED
+
+| Feature | Details |
+|---------|---------|
+| Economy items API (GET list, search, count, by-name) | 4 endpoints live, 1,917 items |
+| Economy events API (GET list, search, count, by-name) | 3 read endpoints live, 58 events |
+| Economy events toggle-active endpoint | `POST /events/{name}/toggle-active` works (no auth yet) |
+| `types_importer.py` — full XML import pipeline | Upsert strategy, full transaction, flags + relations |
+| `events_importer.py` — basic XML import | Insert-only (no upsert on re-import — see IN PROGRESS) |
+| SQLite schema v1 + rev2 | 20+ tables defined; economy domain populated |
+| Docker + Docker Compose setup | Single-container, volume-mounted DB |
+| pytest unit tests for types_importer | 21 tests, 100% passing |
+| Integration smoke test runner | `scripts/test_api.py` (requires running server) |
+| README endpoint documentation | Correct paths, response values |
+| `dict_factory` centralized in `database.py` | No duplicates in repository files |
+| `offset` pagination in search() | Both repositories support OFFSET in SQL |
+| `requests` in `requirements.txt` | Dependency present |
+| Dead code (`economy_repository.py`) removed | Deleted in SPR-021 |
+| f-String SQL replaced with conditional queries | `economy_events_repository.py` safe |
+| Generic HTTP 500 responses (no `str(e)`) | 500 paths return "Internal server error" |
+| DB connection `try/finally` cleanup | All 9 repository methods close connections |
+| `API_PORT` in Docker port mapping | `docker-compose.yml` uses `${API_PORT:-8000}` |
+| Documentation: ARCHITECTURE.md, CHANGELOG.md | Present and up-to-date |
+| ADR-0001 (economy items schema decision) | Documented in `docs/decisions/` |
+
+---
+
+### 🔄 IN PROGRESS
+
+| Feature | Status | Blocker |
+|---------|--------|---------|
+| SPR-020 integration testing sprint | Acceptance criteria partially met (some P1 fixed; no TestClient tests yet) | No FastAPI TestClient tests created |
+| HTTP 500 response sanitization | 500 paths fixed; 404 path in `toggle_event_active` still uses `str(e)` | 1 residual defect |
+| DB connection context manager | `try/finally` in place but `@contextmanager` wrapper not implemented | Architecture debt |
+| `.env` loading | Docker port mapping works; Python app never calls `load_dotenv()` | `python-dotenv` missing from requirements |
+
+---
+
+### ⚠️ PARTIALLY IMPLEMENTED
+
+| Feature | What's Done | What's Missing |
+|---------|------------|----------------|
+| `events_importer.py` | Parses events.xml, inserts all 12 fields, handles IntegrityError | No upsert on re-import (stale data on re-run), no logging, no transaction rollback |
+| Economy event metadata | Schema defines `economy_event_flags`, `_secondary`, `_children` | `events_importer.py` does not populate these tables |
+| Schema migration | Two SQL files exist | No runner, no migration tracking, manual application required |
+| API response schemas | Pydantic models defined (6 classes) | Models imported by nothing — all routes use `response_model=dict` |
+
+---
+
+### 🚫 ABANDONED
+
+| Feature | Evidence | Notes |
+|---------|---------|-------|
+| Sprint-based package naming (`sentinel_spr019`) | ROADMAP P2-006 to rename, no progress | Architectural decision that was a mistake from the start; costs effort to fix but no one has done it |
+
+---
+
+### 📋 NOT STARTED
+
+| Feature | Priority | Notes |
+|---------|----------|-------|
+| **API-Key authentication for toggle-active** | 🔴 P1-CRITICAL | Single biggest production blocker. All prerequisites identified. |
+| CORS middleware | 🟡 P3-001 | Blocks Web UI |
+| Player log import pipeline | 🟡 P3-003 | Schema exists; importer not written |
+| Server session log import | 🟡 P3-004 | Schema exists; importer not written |
+| Damage event import + analytics endpoint | 🟡 P3-005 | Schema exists; no importer or API |
+| FastAPI TestClient integration tests | 🟠 P2 | `tests/test_types_importer.py` only; no route tests |
+| Tests for `events_importer.py` | 🟠 High | 0 tests vs 21 for types_importer — asymmetric coverage |
+| Pinned dependency versions | 🟠 P2-008 | `requirements.txt` has 3 unpinned packages |
+| Package rename (`sentinel` from `sentinel_spr019`) | 🟠 P2-006 | Breaking change requiring all import updates |
+| Typed OpenAPI response schemas | 🟡 P3-007 | Replace `response_model=dict` |
+| Rate limiting (`slowapi`) | 🟡 P3-008 | No DoS protection |
+| Schema migration tooling | 🟡 P3-006 | `scripts/db_init.py` or Alembic |
+| Remove `sentinel.db` from git | 🔴 Critical | Binary DB file committed; not in `.gitignore` |
+| Web UI dashboard | 💡 Future | Also blocked by CORS |
+| PostgreSQL backend option | 💡 Future | |
+| WebSocket real-time log streaming | 💡 Future | |
+| Discord bot integration | 💡 Future | |
+| Map visualization (heat-map) | 💡 Future | |
+
+---
 
 ---
 
