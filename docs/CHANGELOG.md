@@ -18,6 +18,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Archived SPR-020 and SPR-021 as historical sprint summaries with carry-over work moved to the roadmap.
 - Simplified the sprint backlog so it no longer duplicates roadmap detail.
 - Clarified the ADR index to distinguish the legacy consolidated ADR file from standalone ADR records.
+- Reframed `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, and `docs/PROJECT_MEMORY.md` around the DayZ Server Intelligence Platform vision instead of an economy-only API.
+- Updated roadmap priorities to center production readiness first, then mirror scanning, multi-file ingestion, analytics, and dashboard delivery.
+- Removed outdated economy-only wording where it duplicated or conflicted with the broader platform direction.
 
 ### Removed
 - Deleted redundant status, audit, and review documents after merging current findings into the canonical docs.
