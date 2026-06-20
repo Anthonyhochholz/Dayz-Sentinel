@@ -13,7 +13,7 @@ class DiscoveredFile:
 
 
 def scan_mirror(mirror_root: str | Path) -> list[DiscoveredFile]:
-    root = Path(mirror_root).resolve()
+    root = Path(mirror_root).expanduser().resolve()
     if not root.exists() or not root.is_dir():
         raise ValueError(f"Mirror root does not exist or is not a directory: {root}")
 

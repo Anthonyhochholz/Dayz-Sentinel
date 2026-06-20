@@ -33,6 +33,7 @@ Copy `.env.example` to `.env` and adjust as needed:
 ```env
 TZ=Europe/Berlin
 API_PORT=8000
+MIRROR_ROOT=/absolute/path/to/dayz-mirror
 ```
 
 ## API Usage
@@ -90,3 +91,25 @@ Run tests from the repository root:
 ```bash
 python -m pytest -q tests/
 ```
+
+### Mirror validation (real DayZ mirror)
+
+Keep your local DayZ mirror outside this repository (for example: `/srv/dayz/mirror`) so mirror files are never committed to git.
+
+Run validation with a configured mirror root:
+
+```bash
+MIRROR_ROOT=/srv/dayz/mirror python sentinel_spr019/scripts/validate_mirror.py
+```
+
+Or pass a path directly:
+
+```bash
+python sentinel_spr019/scripts/validate_mirror.py --mirror-root /srv/dayz/mirror
+```
+
+The validation report includes:
+- files discovered
+- classification counts
+- supported files
+- unsupported files

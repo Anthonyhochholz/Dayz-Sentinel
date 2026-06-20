@@ -249,3 +249,41 @@ def test_run_mirror_import_is_idempotent_for_repeated_supported_files(tmp_path):
     assert event_count == 1
     assert run_count == 2
     assert second_scan_statuses == ["skipped", "skipped"]
+
+
+def test_run_mirror_import_uses_mirror_root_from_environment(tmp_path, monkeypatch):
+    mirror_root = tmp_path / "mirror"
+    mirror_root.mkdir()
+    db = str(tmp_path / "sentinel.db")
+    _apply_schema(db)
+
+    (mirror_root / "types.xml").write_text(
+        textwrap.dedent(
+            """\
+            <types>
+              <type name="Mosin9130">
+                <nominal>1</nominal>
+                <lifetime>3600</lifetime>
+                <restock>300</restock>
+                <quantmin>1</quantmin>
+                <quantmax>2</quantmax>
+              </type>
+            </types>
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setenv("MIRROR_ROOT", str(mirror_root))
+    summary = run_mirror_import(db_file=db)
+
+    assert summary["status"] == "completed"
+    assert summary["files_discovered"] == 1
+
+    with sqlite3.connect(db) as conn:
+        stored_root = conn.execute(
+            "SELECT mirror_root FROM mirror_scans WHERE id = ?",
+            (summary["scan_id"],),
+        ).fetchone()[0]
+
+    assert stored_root == str(mirror_root.resolve())
