@@ -1,74 +1,31 @@
 # SPR-020 — Integration Testing & Security Fixes
 
-**Status:** 🔄 In Progress  
-**Start Date:** 2026-06-17  
-**Target End:** TBD  
-**Milestone:** MILESTONE-002
+**Status:** ⚠️ Archived with carry-over  
+**Started:** 2026-06-17  
+**Outcome:** Partial delivery; remaining work moved to `docs/ROADMAP.md`
 
 ---
 
 ## Goal
 
-1. Implement automated integration tests that spin up FastAPI with an in-memory DB and assert row counts and response shapes.
-2. Address all P1 (Critical/High security) audit findings.
-3. Fix README documentation discrepancies.
+Improve production readiness through security fixes, testing, and README corrections.
 
----
+## Delivered During This Sprint
 
-## Acceptance Criteria
+- README endpoint examples were corrected.
+- Generic HTTP 500 responses replaced most `detail=str(e)` behavior.
+- SQL query construction for economy events was hardened.
+- Docker Compose port mapping now reads `${API_PORT:-8000}`.
+- `scripts/test_api.py` exists as an integration smoke-test runner.
 
-| # | Criterion | Status |
-|---|-----------|--------|
-| 1 | `pytest` suite with ≥1 test per endpoint | 📋 Pending |
-| 2 | All tests pass: `pytest tests/` | 📋 Pending |
-| 3 | API-Key auth on `toggle-active` endpoint | 📋 Pending |
-| 4 | HTTP 500 returns generic message (no `str(e)`) | 📋 Pending |
-| 5 | All DB connections use context manager | 📋 Pending |
-| 6 | f-String SQL replaced in `economy_events_repository.py` | 📋 Pending |
-| 7 | `API_PORT` read from `.env` in Docker setup | 📋 Pending |
-| 8 | README endpoint docs corrected | 📋 Pending |
+## Not Delivered / Carried Forward
 
----
-
-## Tasks
-
-### P1 Security (AUDIT-001 to AUDIT-005)
-
-- [ ] **P1-001** — Create `api/auth.py` with API-Key dependency  
-  Files: `api/auth.py` (new), `api/routes/economy_events.py`
-
-- [ ] **P1-002** — Replace `detail=str(e)` with generic messages + logging  
-  Files: `routes/economy_items.py:43,66,80`, `routes/economy_events.py:47,70,92,111`
-
-- [ ] **P1-003** — Wrap `sqlite3.connect()` in `@contextmanager` in `database.py`  
-  Files: `api/database.py`, all 3 repository files
-
-- [ ] **P1-004** — Replace f-String SQL in `economy_events_repository.py`  
-  Files: `repositories/economy_events_repository.py:30,36-44,107-114,130`
-
-- [ ] **P1-005** — Fix Docker env loading  
-  Files: `docker-compose.yml`, `Dockerfile`, `requirements.txt`
-
-### Documentation
-
-- [ ] Fix `README.md` health endpoint path (`/health` → `/api/v1/health`)
-- [ ] Remove non-existent `?type=weapon` parameter from README
-- [ ] Fix health check response (`"operational"` → `"ok"`)
-
-### Testing
-
-- [ ] Create `tests/` directory
-- [ ] Create `tests/conftest.py` with in-memory DB fixture
-- [ ] Create `tests/test_economy_items.py`
-- [ ] Create `tests/test_economy_events.py`
-- [ ] Create `tests/test_health.py`
-
----
+- Authentication for the toggle-active write endpoint.
+- End-to-end `.env` loading inside the Python application.
+- A true database connection context manager.
+- Route-level automated tests for the API.
+- Final cleanup of the toggle-active 404 response path.
 
 ## Notes
 
-> Add implementation notes, blockers, or decisions here during the sprint.
-
----
-
-*Created: 2026-06-17*
+This sprint should be treated as a partial hardening pass rather than a completed security sprint.
