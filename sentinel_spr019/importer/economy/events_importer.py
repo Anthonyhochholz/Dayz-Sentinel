@@ -82,7 +82,12 @@ def import_events(xml_file, db_file):
 
 
 def _parse_int(value, field_label: str) -> int | None:
-    """Parse integer values while preserving NULL semantics for empty fields."""
+    """Parse integer values while preserving NULL semantics for empty fields.
+
+    Args:
+        value: Raw field text from XML.
+        field_label: Human-readable field label used in parse error messages.
+    """
     if value in (None, ""):
         return None
     try:
@@ -92,7 +97,12 @@ def _parse_int(value, field_label: str) -> int | None:
 
 
 def _parse_float(value, field_label: str) -> float | None:
-    """Parse float values while preserving NULL semantics for empty fields."""
+    """Parse float values while preserving NULL semantics for empty fields.
+
+    Args:
+        value: Raw field text from XML.
+        field_label: Human-readable field label used in parse error messages.
+    """
     if value in (None, ""):
         return None
     try:
