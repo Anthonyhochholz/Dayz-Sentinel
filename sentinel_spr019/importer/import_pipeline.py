@@ -26,6 +26,10 @@ else:
 SCANNER_VERSION = "mirror-scanner-v1"
 IMPORTER_VERSION = "mirror-import-pipeline-v1"
 
+# File types that use per-row idempotency inside their own importer and should
+# not be skipped by the pipeline's hash-based deduplication check.
+_ROW_LEVEL_IDEMPOTENT_TYPES = frozenset({"adm_log"})
+
 
 def _default_db_path() -> str:
     return str(Path(__file__).resolve().parents[1] / "database" / "sqlite" / "sentinel.db")
@@ -98,7 +102,7 @@ def run_mirror_import(mirror_root: str, db_file: str | None = None) -> dict:
 
             # ADM log files manage their own per-row idempotency; always attempt
             # import so that appended content is picked up on each scan.
-            if file_type != "adm_log" and ImportTrackingRepository.has_completed_run_for_version(
+            if file_type not in _ROW_LEVEL_IDEMPOTENT_TYPES and ImportTrackingRepository.has_completed_run_for_version(
                 source_id, run_importer_version, database_path
             ):
                 skipped += 1
