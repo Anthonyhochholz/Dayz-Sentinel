@@ -22,6 +22,7 @@ def _default_db_path() -> str:
 
 
 def _compute_file_hash(file_path: str) -> str:
+    """Return the SHA-256 digest for a file path using chunked reads."""
     digest = hashlib.sha256()
     with open(file_path, "rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
@@ -30,6 +31,7 @@ def _compute_file_hash(file_path: str) -> str:
 
 
 def _importer_version_for_file(file_type: str, absolute_path: str) -> str:
+    """Build a stable importer-version token for idempotent import tracking."""
     file_hash = _compute_file_hash(absolute_path)
     if file_type == "adm_log" and importer_version_for_hash is not None:
         return importer_version_for_hash(file_hash)
