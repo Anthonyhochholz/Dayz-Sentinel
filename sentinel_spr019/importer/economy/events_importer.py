@@ -14,46 +14,76 @@ def import_events(xml_file, db_file):
     cur = conn.cursor()
 
     inserted = 0
+    updated = 0
     skipped = 0
 
-    for event in root.findall('event'):
-        name        = event.get('name')
-        nominal     = event.findtext('nominal')
-        min_count   = event.findtext('min')
-        max_count   = event.findtext('max')
-        lifetime    = event.findtext('lifetime')
-        restock     = event.findtext('restock')
-        saferadius  = event.findtext('saferadius')
-        distradius  = event.findtext('distanceradius')
-        cleanradius = event.findtext('cleanupradius')
-        position    = event.findtext('position')
-        limit       = event.findtext('limit')
-        active      = event.findtext('active')
+    try:
+        for event in root.findall("event"):
+            name = event.get("name")
+            if not name:
+                skipped += 1
+                continue
 
-        try:
-            cur.execute(
-                """INSERT INTO economy_events
-                   (event_name, nominal, min_count, max_count,
-                    lifetime, restock, saferadius, distanceradius, cleanupradius,
-                    position_mode, limit_mode, active)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (name,
-                 int(nominal)      if nominal     else None,
-                 int(min_count)    if min_count   else None,
-                 int(max_count)    if max_count   else None,
-                 int(lifetime)     if lifetime    else None,
-                 int(restock)      if restock     else None,
-                 float(saferadius) if saferadius  else None,
-                 float(distradius) if distradius  else None,
-                 float(cleanradius)if cleanradius else None,
-                 position, limit,
-                 int(active) if active else None)
+            payload = (
+                _parse_int(event.findtext("nominal")),
+                _parse_int(event.findtext("min")),
+                _parse_int(event.findtext("max")),
+                _parse_int(event.findtext("lifetime")),
+                _parse_int(event.findtext("restock")),
+                _parse_float(event.findtext("saferadius")),
+                _parse_float(event.findtext("distanceradius")),
+                _parse_float(event.findtext("cleanupradius")),
+                event.findtext("position"),
+                event.findtext("limit"),
+                _parse_int(event.findtext("active")),
+                name,
             )
-            inserted += 1
-        except sqlite3.IntegrityError:
-            skipped += 1
 
-    conn.commit()
-    conn.close()
-    print(f"import_events: inserted={inserted}, skipped={skipped}")
-    return inserted, skipped
+            cur.execute("SELECT id FROM economy_events WHERE event_name = ?", (name,))
+            existing = cur.fetchone()
+            if existing:
+                cur.execute(
+                    """
+                    UPDATE economy_events
+                    SET nominal = ?, min_count = ?, max_count = ?, lifetime = ?, restock = ?,
+                        saferadius = ?, distanceradius = ?, cleanupradius = ?, position_mode = ?,
+                        limit_mode = ?, active = ?
+                    WHERE event_name = ?
+                    """,
+                    payload,
+                )
+                updated += 1
+            else:
+                cur.execute(
+                    """
+                    INSERT INTO economy_events
+                        (nominal, min_count, max_count, lifetime, restock,
+                         saferadius, distanceradius, cleanupradius, position_mode,
+                         limit_mode, active, event_name)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+                    """,
+                    payload,
+                )
+                inserted += 1
+
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+    print(f"import_events: inserted={inserted}, updated={updated}, skipped={skipped}")
+    return inserted, updated, skipped
+
+
+def _parse_int(value):
+    if value in (None, ""):
+        return None
+    return int(value)
+
+
+def _parse_float(value):
+    if value in (None, ""):
+        return None
+    return float(value)

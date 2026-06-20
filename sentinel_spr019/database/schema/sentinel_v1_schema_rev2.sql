@@ -20,6 +20,35 @@ CREATE TABLE IF NOT EXISTS import_runs (
     FOREIGN KEY(source_id) REFERENCES import_sources(id)
 );
 
+CREATE TABLE IF NOT EXISTS mirror_scans (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    mirror_root TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    finished_at TEXT,
+    status TEXT NOT NULL,
+    scanner_version TEXT
+);
+
+CREATE TABLE IF NOT EXISTS mirror_scan_files (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    scan_id INTEGER NOT NULL,
+    source_id INTEGER,
+    relative_path TEXT NOT NULL,
+    absolute_path TEXT NOT NULL,
+    file_size_bytes INTEGER,
+    file_type TEXT NOT NULL,
+    classifier_reason TEXT,
+    is_supported INTEGER NOT NULL DEFAULT 0,
+    import_run_id INTEGER,
+    import_status TEXT NOT NULL,
+    error_message TEXT,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY(scan_id) REFERENCES mirror_scans(id) ON DELETE CASCADE,
+    FOREIGN KEY(source_id) REFERENCES import_sources(id),
+    FOREIGN KEY(import_run_id) REFERENCES import_runs(id),
+    UNIQUE(scan_id, relative_path)
+);
+
 CREATE TABLE IF NOT EXISTS localization_errors (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id INTEGER NOT NULL,
@@ -97,3 +126,12 @@ ON map_objects(pos_x,pos_z);
 
 CREATE INDEX IF NOT EXISTS idx_script_logout_uid
 ON script_logout_events(player_uid);
+
+CREATE INDEX IF NOT EXISTS idx_mirror_scan_status
+ON mirror_scans(status, started_at);
+
+CREATE INDEX IF NOT EXISTS idx_mirror_scan_files_scan
+ON mirror_scan_files(scan_id, import_status);
+
+CREATE INDEX IF NOT EXISTS idx_import_runs_status
+ON import_runs(status, started_at);

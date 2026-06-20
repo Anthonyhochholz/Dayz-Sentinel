@@ -2,8 +2,9 @@ import sqlite3
 from pathlib import Path
 
 
-def get_connection():
-    db_path = Path(__file__).resolve().parent.parent / "database" / "sqlite" / "sentinel.db"
+def get_connection(db_path: str | Path | None = None):
+    if db_path is None:
+        db_path = Path(__file__).resolve().parent.parent / "database" / "sqlite" / "sentinel.db"
     return sqlite3.connect(str(db_path))
 
 
