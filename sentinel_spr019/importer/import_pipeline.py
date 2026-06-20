@@ -100,7 +100,7 @@ def run_mirror_import(mirror_root: str, db_file: str | None = None) -> dict:
 
     return {
         "scan_id": scan_id,
-        "status": "completed" if failed == 0 else "completed_with_errors",
+        "status": status,
         "files_discovered": len(discovered_files),
         "files_imported": imported,
         "files_unsupported": unsupported,

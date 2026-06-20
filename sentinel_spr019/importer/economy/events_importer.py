@@ -77,14 +77,14 @@ def import_events(xml_file, db_file):
     return inserted, updated, skipped
 
 
-def _parse_int(value):
+def _parse_int(value) -> int | None:
     """Parse integer values while preserving NULL semantics for empty fields."""
     if value in (None, ""):
         return None
     return int(value)
 
 
-def _parse_float(value):
+def _parse_float(value) -> float | None:
     """Parse float values while preserving NULL semantics for empty fields."""
     if value in (None, ""):
         return None
