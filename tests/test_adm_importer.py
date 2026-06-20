@@ -348,13 +348,13 @@ class TestIdempotency:
         import_adm(str(adm), db)
 
         with sqlite3.connect(db) as conn:
-            count = conn.execute("SELECT COUNT(*) FROM player_actions").fetchone()[0]
-        # "died" + "admin_action" + "disconnected" (no open session on second run) = varies
-        # The key assertion is it's not doubled
-        first_count = count
+            first_count = conn.execute("SELECT COUNT(*) FROM player_actions").fetchone()[0]
 
         import_adm(str(adm), db)
-        count_after_third = conn.execute("SELECT COUNT(*) FROM player_actions").fetchone()[0]
+
+        with sqlite3.connect(db) as conn:
+            count_after_third = conn.execute("SELECT COUNT(*) FROM player_actions").fetchone()[0]
+
         assert count_after_third == first_count
 
     def test_second_import_returns_zero_stored(self, tmp_path):
