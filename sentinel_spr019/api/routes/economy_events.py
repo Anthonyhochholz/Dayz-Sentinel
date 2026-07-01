@@ -1,7 +1,8 @@
 import logging
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional
 from sentinel_spr019.api.repositories.economy_events_repository import EconomyEventsRepository
+from sentinel_spr019.api.security import require_write_api_key
 
 LOGGER = logging.getLogger(__name__)
 
@@ -27,10 +28,10 @@ async def get_events(
     """
     try:
         if search:
-            events = EconomyEventsRepository.search(search, limit, offset, active_only)
+            events, total = EconomyEventsRepository.search(search, limit, offset, active_only)
             return {
                 "data": events,
-                "total": len(events),
+                "total": total,
                 "limit": limit,
                 "offset": offset,
                 "active_only": active_only,
@@ -75,7 +76,7 @@ async def get_event(event_name: str):
 
 
 @router.post("/events/{event_name}/toggle-active", response_model=dict)
-async def toggle_event_active(event_name: str):
+async def toggle_event_active(event_name: str, _auth: None = Depends(require_write_api_key)):
     """
     Toggle the active status of an economy event.
 

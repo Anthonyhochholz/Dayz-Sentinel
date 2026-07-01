@@ -74,7 +74,7 @@ class EconomyItemsRepository:
         return item
 
     @staticmethod
-    def search(query: str, limit: int = 50, offset: int = 0) -> List[dict]:
+    def search(query: str, limit: int = 50, offset: int = 0) -> tuple[List[dict], int]:
         """
         Search items by name (case-insensitive).
 
@@ -84,13 +84,22 @@ class EconomyItemsRepository:
             offset: Number of results to skip
 
         Returns:
-            List of matching items
+            Tuple of (matching items, total count of matching items)
         """
         conn = None
         try:
             conn = get_connection()
             conn.row_factory = dict_factory
             cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT COUNT(*) as count
+                FROM economy_items
+                WHERE name LIKE ?
+                """,
+                (f"%{query}%",),
+            )
+            total = cursor.fetchone()["count"]
             cursor.execute(
                 """
                 SELECT name, nominal, min_value, max_value, restock, lifetime
@@ -105,7 +114,7 @@ class EconomyItemsRepository:
         finally:
             if conn is not None:
                 conn.close()
-        return items
+        return items, total
 
     @staticmethod
     def get_count() -> int:
