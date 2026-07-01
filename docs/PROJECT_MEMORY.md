@@ -65,7 +65,7 @@
 
 | ID | Severity | Current state |
 |----|----------|---------------|
-| AUDIT-001 / SEC-001 | Critical | `POST /api/v1/economy/events/{event_name}/toggle-active` has no authentication |
+| AUDIT-001 / SEC-001 | Mitigated | `POST /api/v1/economy/events/{event_name}/toggle-active` is guarded by `X-API-Key` (`SENTINEL_WRITE_API_KEY`) |
 | SEC-002 | Critical | The app does not load `.env`; future secrets and settings are not available to Python code |
 | SEC-003 | Critical | `sentinel_spr019/database/sqlite/sentinel.db` is still committed to git |
 | SEC-004 | High | `toggle_event_active` still returns `detail=str(e)` for not-found errors |

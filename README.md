@@ -33,6 +33,7 @@ Copy `.env.example` to `.env` and adjust as needed:
 ```env
 TZ=Europe/Berlin
 API_PORT=8000
+SENTINEL_WRITE_API_KEY=change-me
 ```
 
 ## API Usage
@@ -71,7 +72,9 @@ POST /api/v1/economy/events/{event_name}/toggle-active
 Example write request:
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/economy/events/ZmbF_Base/toggle-active
+curl -X POST \
+  -H "X-API-Key: change-me" \
+  http://localhost:8000/api/v1/economy/events/ZmbF_Base/toggle-active
 ```
 
 ## Documentation

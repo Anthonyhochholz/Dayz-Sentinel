@@ -447,7 +447,8 @@ class TestPipelineIntegration:
         summary2 = run_mirror_import(str(mirror_root), db_file=db)
 
         # Second scan: file hash matches completed run → counts as already imported
-        assert summary2["files_imported"] == 1
+        assert summary2["files_imported"] == 0
+        assert summary2["files_skipped"] == 1
         assert summary2["files_failed"] == 0
 
         with sqlite3.connect(db) as conn:

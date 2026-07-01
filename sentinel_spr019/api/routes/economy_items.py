@@ -25,10 +25,10 @@ async def get_items(
     """
     try:
         if search:
-            items = EconomyItemsRepository.search(search, limit, offset)
+            items, total = EconomyItemsRepository.search(search, limit, offset)
             return {
                 "data": items,
-                "total": len(items),
+                "total": total,
                 "limit": limit,
                 "offset": offset,
                 "search": search

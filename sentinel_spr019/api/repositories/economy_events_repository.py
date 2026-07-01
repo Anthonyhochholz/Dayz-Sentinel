@@ -80,7 +80,7 @@ class EconomyEventsRepository:
         return event
 
     @staticmethod
-    def search(query: str, limit: int = 50, offset: int = 0, active_only: bool = False) -> List[dict]:
+    def search(query: str, limit: int = 50, offset: int = 0, active_only: bool = False) -> tuple[List[dict], int]:
         """
         Search events by name (case-insensitive).
 
@@ -91,7 +91,7 @@ class EconomyEventsRepository:
             active_only: Filter for active events only
 
         Returns:
-            List of matching events
+            Tuple of (matching events, total count of matching events)
         """
         conn = None
         try:
@@ -100,12 +100,22 @@ class EconomyEventsRepository:
             cursor = conn.cursor()
             if active_only:
                 cursor.execute(
+                    "SELECT COUNT(*) as count FROM economy_events WHERE event_name LIKE ? AND active = 1",
+                    (f"%{query}%",),
+                )
+                total = cursor.fetchone()["count"]
+                cursor.execute(
                     _SELECT_EVENT
                     + " WHERE event_name LIKE ? AND active = 1"
                     " ORDER BY event_name ASC LIMIT ? OFFSET ?",
                     (f"%{query}%", limit, offset),
                 )
             else:
+                cursor.execute(
+                    "SELECT COUNT(*) as count FROM economy_events WHERE event_name LIKE ?",
+                    (f"%{query}%",),
+                )
+                total = cursor.fetchone()["count"]
                 cursor.execute(
                     _SELECT_EVENT
                     + " WHERE event_name LIKE ?"
@@ -116,7 +126,7 @@ class EconomyEventsRepository:
         finally:
             if conn is not None:
                 conn.close()
-        return events
+        return events, total
 
     @staticmethod
     def get_count(active_only: bool = False) -> int:
