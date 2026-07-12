@@ -9,27 +9,24 @@ _SCHEMA_FILES = (
 )
 
 
-def _has_core_schema(conn: sqlite3.Connection) -> bool:
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'economy_items' LIMIT 1"
-    )
-    return cursor.fetchone() is not None
-
-
 def _bootstrap_database(db_path: Path) -> None:
     db_path.parent.mkdir(parents=True, exist_ok=True)
+    if db_path.exists():
+        return
 
     with sqlite3.connect(str(db_path)) as conn:
-        if _has_core_schema(conn):
-            return
         for schema_file in _SCHEMA_FILES:
             try:
-                conn.executescript(schema_file.read_text(encoding="utf-8"))
+                sql_text = schema_file.read_text(encoding="utf-8")
+            except FileNotFoundError as exc:
+                raise RuntimeError(f"Schema file not found: {schema_file}") from exc
             except OSError as exc:
-                raise RuntimeError(f"Failed to load schema file: {schema_file}") from exc
+                raise RuntimeError(f"Failed to read schema file: {schema_file}") from exc
+
+            try:
+                conn.executescript(sql_text)
             except sqlite3.Error as exc:
-                raise RuntimeError(f"Failed to apply schema file: {schema_file}") from exc
+                raise RuntimeError(f"SQL error in schema file: {schema_file}") from exc
         conn.commit()
 
 
