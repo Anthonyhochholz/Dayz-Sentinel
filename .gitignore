@@ -2,5 +2,5 @@ __pycache__/
 *.pyc
 .env
 *.bak
-logs/
+/logs/
 sentinel_spr019/database/sqlite/*.db
