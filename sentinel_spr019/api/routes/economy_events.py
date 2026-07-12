@@ -1,5 +1,6 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException, Query
+from starlette.concurrency import run_in_threadpool
 from typing import Optional
 from sentinel_spr019.api.repositories.economy_events_repository import EconomyEventsRepository
 from sentinel_spr019.api.security import require_write_api_key
@@ -28,7 +29,13 @@ async def get_events(
     """
     try:
         if search:
-            events, total = EconomyEventsRepository.search(search, limit, offset, active_only)
+            events, total = await run_in_threadpool(
+                EconomyEventsRepository.search,
+                search,
+                limit,
+                offset,
+                active_only,
+            )
             return {
                 "data": events,
                 "total": total,
@@ -38,7 +45,12 @@ async def get_events(
                 "search": search
             }
         else:
-            events, total = EconomyEventsRepository.get_all(limit, offset, active_only)
+            events, total = await run_in_threadpool(
+                EconomyEventsRepository.get_all,
+                limit,
+                offset,
+                active_only,
+            )
             return {
                 "data": events,
                 "total": total,
@@ -61,7 +73,7 @@ async def get_event(event_name: str):
     Returns event details or 404 if not found.
     """
     try:
-        event = EconomyEventsRepository.get_by_name(event_name)
+        event = await run_in_threadpool(EconomyEventsRepository.get_by_name, event_name)
         if not event:
             raise HTTPException(
                 status_code=404,
@@ -85,15 +97,15 @@ async def toggle_event_active(event_name: str, _auth: None = Depends(require_wri
     Returns the new active status.
     """
     try:
-        new_status = EconomyEventsRepository.toggle_active(event_name)
+        new_status = await run_in_threadpool(EconomyEventsRepository.toggle_active, event_name)
         return {
             "event_name": event_name,
             "active": new_status,
             "message": f"Event set to {'active' if new_status else 'inactive'}"
         }
-    except Exception as e:
-        if "not found" in str(e):
-            raise HTTPException(status_code=404, detail=str(e))
+    except LookupError:
+        raise HTTPException(status_code=404, detail=f"Event '{event_name}' not found")
+    except Exception:
         LOGGER.exception("Error in toggle_event_active: %s", event_name)
         raise HTTPException(status_code=500, detail="Internal server error")
 
@@ -108,7 +120,7 @@ async def get_events_count(active_only: bool = Query(False)):
     Returns the total number of events in the database.
     """
     try:
-        count = EconomyEventsRepository.get_count(active_only)
+        count = await run_in_threadpool(EconomyEventsRepository.get_count, active_only)
         return {
             "total": count,
             "active_only": active_only

@@ -2,6 +2,8 @@ services:
   sentinel:
     build: .
     container_name: dayz-sentinel
+    env_file:
+      - .env
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:

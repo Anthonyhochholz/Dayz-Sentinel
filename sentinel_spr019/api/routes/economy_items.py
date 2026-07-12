@@ -1,6 +1,9 @@
 import logging
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException, Query
-from typing import List, Optional
+from starlette.concurrency import run_in_threadpool
+
 from sentinel_spr019.api.repositories.economy_items_repository import EconomyItemsRepository
 
 LOGGER = logging.getLogger(__name__)
@@ -25,7 +28,7 @@ async def get_items(
     """
     try:
         if search:
-            items, total = EconomyItemsRepository.search(search, limit, offset)
+            items, total = await run_in_threadpool(EconomyItemsRepository.search, search, limit, offset)
             return {
                 "data": items,
                 "total": total,
@@ -34,7 +37,7 @@ async def get_items(
                 "search": search
             }
         else:
-            items, total = EconomyItemsRepository.get_all(limit, offset)
+            items, total = await run_in_threadpool(EconomyItemsRepository.get_all, limit, offset)
             return {
                 "data": items,
                 "total": total,
@@ -56,7 +59,7 @@ async def get_item(item_name: str):
     Returns item details or 404 if not found.
     """
     try:
-        item = EconomyItemsRepository.get_by_name(item_name)
+        item = await run_in_threadpool(EconomyItemsRepository.get_by_name, item_name)
         if not item:
             raise HTTPException(
                 status_code=404,
@@ -78,7 +81,7 @@ async def get_items_count():
     Returns the total number of items in the database.
     """
     try:
-        count = EconomyItemsRepository.get_count()
+        count = await run_in_threadpool(EconomyItemsRepository.get_count)
         return {"total": count}
     except Exception as e:
         LOGGER.exception("Error in get_items_count")

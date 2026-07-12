@@ -34,7 +34,10 @@ Copy `.env.example` to `.env` and adjust as needed:
 TZ=Europe/Berlin
 API_PORT=8000
 SENTINEL_WRITE_API_KEY=change-me
+SENTINEL_DB_PATH=sentinel_spr019/database/sqlite/sentinel.db
 ```
+
+`SENTINEL_DB_PATH` is optional; if the database file does not exist, the API bootstraps it from the schema files automatically.
 
 ## API Usage
 

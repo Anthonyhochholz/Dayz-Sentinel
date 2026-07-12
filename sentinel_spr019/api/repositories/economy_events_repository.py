@@ -163,7 +163,7 @@ class EconomyEventsRepository:
             cursor.execute("SELECT active FROM economy_events WHERE event_name = ?", (name,))
             result = cursor.fetchone()
             if not result:
-                raise Exception(f"Event {name} not found")
+                raise LookupError(f"Event '{name}' not found")
             new_status = 1 - result[0]
             cursor.execute(
                 "UPDATE economy_events SET active = ? WHERE event_name = ?",
