@@ -2,7 +2,7 @@ import sqlite3
 import os
 from pathlib import Path
 
-_DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent / "database" / "sqlite" / "sentinel.db"
+_DEFAULT_DB_PATH = str(Path(__file__).resolve().parent.parent / "database" / "sqlite" / "sentinel.db")
 _SCHEMA_FILES = (
     Path(__file__).resolve().parent.parent / "database" / "schema" / "sentinel_v1_schema.sql",
     Path(__file__).resolve().parent.parent / "database" / "schema" / "sentinel_v1_schema_rev2.sql",
@@ -25,7 +25,7 @@ def _bootstrap_database(db_path: Path) -> None:
 
 def get_connection(db_path: str | Path | None = None):
     if db_path is None:
-        db_path = os.getenv("SENTINEL_DB_PATH", str(_DEFAULT_DB_PATH))
+        db_path = os.getenv("SENTINEL_DB_PATH", _DEFAULT_DB_PATH)
 
     resolved_path = Path(db_path)
     _bootstrap_database(resolved_path)

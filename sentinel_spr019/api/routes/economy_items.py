@@ -1,7 +1,8 @@
 import logging
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException, Query
 from starlette.concurrency import run_in_threadpool
-from typing import Optional
 from sentinel_spr019.api.repositories.economy_items_repository import EconomyItemsRepository
 
 LOGGER = logging.getLogger(__name__)
