@@ -124,6 +124,18 @@ def test_toggle_active_accepts_valid_key(api_client, monkeypatch):
     assert response.json()["active"] is False
 
 
+def test_toggle_active_returns_404_without_internal_exception_text(api_client, monkeypatch):
+    monkeypatch.setenv("SENTINEL_WRITE_API_KEY", "test-write-key")
+    security_module.get_security_settings.cache_clear()
+
+    response = api_client.post(
+        "/api/v1/economy/events/DoesNotExist/toggle-active",
+        headers={"X-API-Key": "test-write-key"},
+    )
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Event 'DoesNotExist' not found"
+
+
 def test_read_events_endpoint_stays_accessible_without_key(api_client, monkeypatch):
     monkeypatch.delenv("SENTINEL_WRITE_API_KEY", raising=False)
     security_module.get_security_settings.cache_clear()

@@ -3,3 +3,4 @@ __pycache__/
 .env
 *.bak
 logs/
+sentinel_spr019/database/sqlite/*.db

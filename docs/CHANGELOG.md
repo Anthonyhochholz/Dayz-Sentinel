@@ -21,6 +21,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Reframed `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, and `docs/PROJECT_MEMORY.md` around the DayZ Server Intelligence Platform vision instead of an economy-only API.
 - Updated roadmap priorities to center production readiness first, then mirror scanning, multi-file ingestion, analytics, and dashboard delivery.
 - Removed outdated economy-only wording where it duplicated or conflicted with the broader platform direction.
+- API now loads `.env` on startup via `python-dotenv`, and Docker Compose injects `.env` with `env_file`.
+- Removed tracked live SQLite database (`sentinel_spr019/database/sqlite/sentinel.db`) and added runtime DB bootstrap from schema files when missing.
+- Economy and import-tracking routes now offload synchronous SQLite repository calls to a thread pool.
+- `POST /api/v1/economy/events/{event_name}/toggle-active` now returns a generic 404 detail without exposing raw exception strings.
 
 ### Removed
 - Deleted redundant status, audit, and review documents after merging current findings into the canonical docs.

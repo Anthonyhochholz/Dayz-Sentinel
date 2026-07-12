@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, HTTPException, Query
+from starlette.concurrency import run_in_threadpool
 
 from sentinel_spr019.api.repositories.import_tracking_repository import ImportTrackingRepository
 
@@ -16,7 +17,7 @@ async def get_scans(
     offset: int = Query(0, ge=0),
 ):
     try:
-        scans = ImportTrackingRepository.list_scans(limit=limit, offset=offset)
+        scans = await run_in_threadpool(ImportTrackingRepository.list_scans, limit, offset)
         return {"data": scans, "limit": limit, "offset": offset}
     except Exception:
         LOGGER.exception("Error in get_scans")
@@ -26,7 +27,7 @@ async def get_scans(
 @router.get("/scans/{scan_id}", response_model=dict)
 async def get_scan(scan_id: int):
     try:
-        scan = ImportTrackingRepository.get_scan(scan_id=scan_id)
+        scan = await run_in_threadpool(ImportTrackingRepository.get_scan, scan_id)
         if not scan:
             raise HTTPException(status_code=404, detail=f"Scan '{scan_id}' not found")
         return scan
@@ -44,7 +45,7 @@ async def get_scan_files(
     offset: int = Query(0, ge=0),
 ):
     try:
-        files = ImportTrackingRepository.list_scan_files(scan_id=scan_id, limit=limit, offset=offset)
+        files = await run_in_threadpool(ImportTrackingRepository.list_scan_files, scan_id, limit, offset)
         return {"data": files, "scan_id": scan_id, "limit": limit, "offset": offset}
     except Exception:
         LOGGER.exception("Error in get_scan_files: %s", scan_id)
@@ -57,7 +58,7 @@ async def get_runs(
     offset: int = Query(0, ge=0),
 ):
     try:
-        runs = ImportTrackingRepository.list_runs(limit=limit, offset=offset)
+        runs = await run_in_threadpool(ImportTrackingRepository.list_runs, limit, offset)
         return {"data": runs, "limit": limit, "offset": offset}
     except Exception:
         LOGGER.exception("Error in get_runs")

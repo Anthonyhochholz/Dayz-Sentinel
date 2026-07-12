@@ -66,10 +66,10 @@
 | ID | Severity | Current state |
 |----|----------|---------------|
 | AUDIT-001 / SEC-001 | Mitigated | `POST /api/v1/economy/events/{event_name}/toggle-active` is guarded by `X-API-Key` (`SENTINEL_WRITE_API_KEY`) |
-| SEC-002 | Critical | The app does not load `.env`; future secrets and settings are not available to Python code |
-| SEC-003 | Critical | `sentinel_spr019/database/sqlite/sentinel.db` is still committed to git |
-| SEC-004 | High | `toggle_event_active` still returns `detail=str(e)` for not-found errors |
-| SEC-006 | High | Route handlers are `async def` but use synchronous SQLite calls |
+| SEC-002 | Mitigated | App loads `.env` and Docker Compose now injects `.env` into the container |
+| SEC-003 | Mitigated | Tracked live SQLite DB removed from git and DB file is ignored; DB bootstrap is automatic |
+| SEC-004 | Mitigated | `toggle_event_active` no longer exposes exception text for not-found errors |
+| SEC-006 | Mitigated | Route handlers offload synchronous repository calls to a thread pool |
 | AUDIT-011 | Medium | Package name is still sprint-coupled: `sentinel_spr019` |
 | AUDIT-012 | Low | No CORS middleware is configured |
 | P3 schema work | Medium | Migration tooling and most non-economy import pipelines are not implemented for the target server intelligence platform |
@@ -82,6 +82,9 @@
 - `types_importer.py` and `tests/test_types_importer.py` were delivered in SPR-021.
 - Search endpoints now pass `offset` into repository SQL queries.
 - README endpoint examples were corrected before this cleanup pass.
+- API now loads `.env` on startup and supports optional `SENTINEL_DB_PATH`.
+- Docker Compose now uses `.env` via `env_file`.
+- API database now bootstraps schema automatically when the DB file is missing.
 
 ## Historical Record Locations
 
