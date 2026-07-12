@@ -1,6 +1,6 @@
 # Roadmap — DayZ Sentinel
 
-> Future work only. Aktueller Zustand steht in `docs/PROJECT_MEMORY.md`.
+> Nur zukünftige Arbeiten. Aktueller Zustand steht in `docs/PROJECT_MEMORY.md`.
 
 ## P1 — Stabilität, Sicherheit, Maintainability
 

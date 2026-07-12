@@ -1,6 +1,6 @@
 # Project Memory — DayZ Sentinel
 
-> Single source of truth für den aktuellen Projektzustand.
+> Einzige Informationsquelle für den aktuellen Projektzustand.
 
 ## Documentation Ownership
 
@@ -17,7 +17,7 @@
 | Field | Value |
 |-------|-------|
 | Product | DayZ Server Intelligence Platform |
-| Repository | `Anthonyhochholz/Dayz-Sentinel` |
+| Repository | `Anthonyhochholz/DayZ-Sentinel` |
 | Runtime | Python 3.11+ |
 | Framework | FastAPI + uvicorn |
 | Database | SQLite |

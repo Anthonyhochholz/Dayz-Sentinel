@@ -1,6 +1,6 @@
-# Dayz-Sentinel 🎮
+# DayZ-Sentinel 🎮
 
-Dayz-Sentinel ist eine FastAPI-basierte REST-API plus Import-Pipeline für DayZ-Economy- und ADM-Log-Daten (SQLite-Backend).
+DayZ-Sentinel ist eine FastAPI-basierte REST-API plus Import-Pipeline für DayZ-Economy- und ADM-Log-Daten (SQLite-Backend).
 
 ## Quick Start
 
