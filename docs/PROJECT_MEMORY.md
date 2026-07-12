@@ -1,6 +1,6 @@
 # Project Memory — DayZ Sentinel
 
-> Single source of truth for current project state and important operational facts.
+> Single source of truth für den aktuellen Projektzustand.
 
 ## Documentation Ownership
 
@@ -18,76 +18,57 @@
 |-------|-------|
 | Product | DayZ Server Intelligence Platform |
 | Repository | `Anthonyhochholz/Dayz-Sentinel` |
-| Runtime | Python 3.11 |
+| Runtime | Python 3.11+ |
 | Framework | FastAPI + uvicorn |
 | Database | SQLite |
-| Current package root | `sentinel_spr019/` |
+| Package root | `sentinel_spr019/` |
 | Deployment targets | Docker, Docker Compose, CasaOS |
-
-## Long-Term Vision
-
-- DayZ Sentinel is intended to become a DayZ Server Intelligence Platform, not only an economy import API.
-- The target platform ingests complete DayZ server mirrors, classifies discovered files, imports multiple data domains, and derives analytics for operators.
-- Planned ingestion scope includes economy XML, cluster XML, spawn XML, world XML, ADM logs, RPT logs, and generic log files.
 
 ## Current State
 
-- Current documentation cleanup completed on `2026-06-20`.
-- The current implementation is still economy-centric and exposes health, economy items, and economy events endpoints.
-- `types_importer.py` is implemented with upsert behavior and relational table syncing.
-- `events_importer.py` exists, but still performs insert-only imports and skips duplicates on re-run.
-- Mirror scanning, multi-type file discovery, analytics, and dashboard capabilities are planned but not yet implemented.
-- Sprint records for SPR-020 and SPR-021 are archived with carry-over work moved to the roadmap.
+- API-Endpunkte für Health, Economy-Items, Economy-Events und Import-Tracking sind implementiert.
+- Der Write-Endpunkt `POST /api/v1/economy/events/{event_name}/toggle-active` ist per `X-API-Key` abgesichert.
+- Die Mirror-Pipeline (`run_mirror_import`) ist implementiert und verarbeitet aktuell `types.xml`, `events.xml` und `*.adm`.
+- Import-Tracking (`mirror_scans`, `mirror_scan_files`, `import_runs`, `import_sources`) wird aktiv befüllt und über API readbar gemacht.
+- `events_importer.py` und `types_importer.py` arbeiten mit Upsert-/Idempotenz-Logik im Pipeline-Kontext.
+- ADM-Import (`importer/logs/adm_importer.py`) parst Connect/Disconnect/Kill/Death/Admin-Events und schreibt in Spieler-/Session-/Event-Tabellen.
 
 ### Component Status
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Core API | ✅ Operational | FastAPI app boots from `sentinel_spr019.api.main:app` |
-| Economy items | ✅ Ready | Read endpoints and importer are implemented |
-| Economy events | ✅ Ready with caveats | Read endpoints and toggle endpoint exist |
-| Mirror ingestion platform | 🚧 Planned | Mirror Scanner, file discovery, and parser orchestration are not implemented yet |
-| Analytics engine | 🚧 Planned | No derived server intelligence layer exists yet |
-| Tests | ⚠️ Partial | Importer unit tests exist; route/integration coverage is incomplete |
-| Docker setup | ✅ Ready with caveats | `docker-compose.yml` maps `${API_PORT:-8000}:8000` |
-| Documentation | ✅ Consolidated | Canonical ownership defined in this file |
+| Core API | ✅ Operational | FastAPI app aus `sentinel_spr019.api.main:app` |
+| Economy items | ✅ Operational | Read-Endpunkte + Importer vorhanden |
+| Economy events | ✅ Operational | Read-Endpunkte + Toggle-Write-Endpunkt |
+| Import tracking API | ✅ Operational | `/api/v1/import-tracking/*` verfügbar |
+| Mirror scanning + pipeline | ✅ Operational | Datei-Scan, Klassifikation, Dispatch implementiert |
+| ADM importer | ✅ Operational | Parser + DB-Persistenz implementiert |
+| RPT importer | 🚧 Planned | Klassifikation vorhanden, Import nicht implementiert |
+| Cluster/world importers | 🚧 Planned | Schema vorbereitet, Importer fehlen |
+| Analytics layer | 🚧 Planned | Noch keine abgeleiteten Read-Modelle |
+| Tests | ✅ Strong unit/integration | Lokaler Stand: `68 passed` |
 
 ## Important Operational Facts
 
-- Run tests from the repository root with `python -m pytest -q tests/`.
-- Utility scripts live under `sentinel_spr019/scripts/`.
-- SQLite data files live under `sentinel_spr019/database/sqlite/`.
-- Schema files live under `sentinel_spr019/database/schema/`.
-- ADRs live in `docs/decisions/`; sprint history lives in `docs/sprints/` and `sentinel_spr019/docs/`.
-- Existing schema already includes placeholders for cluster/world data, player/session data, server/script logs, and import tracking.
+- Tests vom Repo-Root: `python -m pytest -q tests/`.
+- Utility-Skripte liegen unter `sentinel_spr019/scripts/`.
+- SQLite-Datei liegt standardmäßig unter `sentinel_spr019/database/sqlite/sentinel.db`.
+- Schema-Dateien liegen in `sentinel_spr019/database/schema/`.
+- API lädt `.env` beim Start; DB wird bei fehlender Datei automatisch gebootstrapped.
 
 ## Open Findings
 
 | ID | Severity | Current state |
 |----|----------|---------------|
-| AUDIT-001 / SEC-001 | Mitigated | `POST /api/v1/economy/events/{event_name}/toggle-active` is guarded by `X-API-Key` (`SENTINEL_WRITE_API_KEY`) |
-| SEC-002 | Mitigated | App loads `.env` and Docker Compose now injects `.env` into the container |
-| SEC-003 | Mitigated | Tracked live SQLite DB removed from git and DB file is ignored; DB bootstrap is automatic |
-| SEC-004 | Mitigated | `toggle_event_active` no longer exposes exception text for not-found errors |
-| SEC-006 | Mitigated | Route handlers offload synchronous repository calls to a thread pool |
-| AUDIT-011 | Medium | Package name is still sprint-coupled: `sentinel_spr019` |
-| AUDIT-012 | Low | No CORS middleware is configured |
-| P3 schema work | Medium | Migration tooling and most non-economy import pipelines are not implemented for the target server intelligence platform |
-
-## Recently Completed Work
-
-- `dict_factory` was centralized in `sentinel_spr019/api/database.py`.
-- Dead repository code (`economy_repository.py`) was removed.
-- `requests` is present in `requirements.txt`.
-- `types_importer.py` and `tests/test_types_importer.py` were delivered in SPR-021.
-- Search endpoints now pass `offset` into repository SQL queries.
-- README endpoint examples were corrected before this cleanup pass.
-- API now loads `.env` on startup and supports optional `SENTINEL_DB_PATH`.
-- Docker Compose now uses `.env` via `env_file`.
-- API database now bootstraps schema automatically when the DB file is missing.
+| AUDIT-011 | Medium | Package name ist weiterhin sprint-gekoppelt (`sentinel_spr019`) |
+| AUDIT-012 | Low | Kein CORS-Middleware-Setup vorhanden |
+| ARCH-001 | Medium | `import_pipeline.py` nutzt `api.repositories.ImportTrackingRepository` (Cross-Layer-Abhängigkeit) |
+| INGEST-001 | Medium | Kein RPT-Importer implementiert |
+| INGEST-002 | Medium | Cluster-/World-Importer fehlen weiterhin |
+| OPS-001 | Low | Keine CI-Workflow-Dateien für automatisierte Tests im Repository |
 
 ## Historical Record Locations
 
-- Use [`docs/CHANGELOG.md`](./CHANGELOG.md) for dated change history.
-- Use [`docs/decisions/README.md`](./decisions/README.md) for architecture decisions.
-- Use [`docs/sprints/README.md`](./sprints/README.md) for archived sprint summaries.
+- Change-Historie: [`docs/CHANGELOG.md`](./CHANGELOG.md)
+- Architekturentscheidungen: [`docs/decisions/README.md`](./decisions/README.md)
+- Sprint-Historie: [`docs/sprints/README.md`](./sprints/README.md)
