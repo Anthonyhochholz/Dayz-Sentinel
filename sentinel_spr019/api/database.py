@@ -14,13 +14,13 @@ def _bootstrap_database(db_path: Path) -> None:
     if db_path.exists():
         return
 
-    conn = sqlite3.connect(str(db_path))
-    try:
+    with sqlite3.connect(str(db_path)) as conn:
         for schema_file in _SCHEMA_FILES:
-            conn.executescript(schema_file.read_text(encoding="utf-8"))
+            try:
+                conn.executescript(schema_file.read_text(encoding="utf-8"))
+            except OSError as exc:
+                raise RuntimeError(f"Failed to load schema file: {schema_file}") from exc
         conn.commit()
-    finally:
-        conn.close()
 
 
 def get_connection(db_path: str | Path | None = None):
