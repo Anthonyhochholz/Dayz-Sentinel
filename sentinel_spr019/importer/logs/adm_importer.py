@@ -264,8 +264,16 @@ def _get_or_create_player(cur, player_uid: str, player_name: str) -> tuple[int, 
 
 def _get_or_create_server_session(cur, start_time: str) -> dict[str, int]:
     cur.execute(
-        "SELECT id FROM server_sessions WHERE executable = 'adm_log' AND COALESCE(start_time, '') = COALESCE(?, '')",
-        (start_time,),
+        """
+        SELECT id
+        FROM server_sessions
+        WHERE executable = 'adm_log'
+          AND (
+              (start_time IS NULL AND ? IS NULL)
+              OR start_time = ?
+          )
+        """,
+        (start_time or None, start_time or None),
     )
     row = cur.fetchone()
     if row:
@@ -330,6 +338,7 @@ def _store_disconnected(cur, event: DisconnectedEvent) -> dict[str, int]:
     if cur.fetchone():
         return {"stored": stored, "skipped": skipped + 1}
 
+    # Preserve orphan disconnect events deterministically when no matching connect event exists.
     cur.execute(
         "INSERT INTO player_sessions (player_id, connect_time, disconnect_time) VALUES (?, ?, ?)",
         (player_id, event.timestamp, event.timestamp),
@@ -339,7 +348,11 @@ def _store_disconnected(cur, event: DisconnectedEvent) -> dict[str, int]:
 
 def _store_killed(cur, event: KilledEvent) -> dict[str, int]:
     victim_id, victim_inserted = _get_or_create_player(cur, event.victim_uid, event.victim_name)
-    _, killer_inserted = _get_or_create_player(cur, event.killer_uid, event.killer_name)
+    killer_id, killer_inserted = _get_or_create_player(cur, event.killer_uid, event.killer_name)
+    cur.execute("SELECT player_uid FROM players WHERE id = ?", (killer_id,))
+    killer_uid_row = cur.fetchone()
+    killer_uid = killer_uid_row[0] if killer_uid_row else event.killer_uid
+
     stored = (1 if victim_inserted else 0) + (1 if killer_inserted else 0)
     skipped = (0 if victim_inserted else 1) + (0 if killer_inserted else 1)
 
@@ -348,7 +361,7 @@ def _store_killed(cur, event: KilledEvent) -> dict[str, int]:
         SELECT id FROM player_damage_events
         WHERE player_id = ? AND timestamp = ? AND source = ? AND weapon = ?
         """,
-        (victim_id, event.timestamp, event.killer_uid, event.weapon),
+        (victim_id, event.timestamp, killer_uid, event.weapon),
     )
     if cur.fetchone():
         return {"stored": stored, "skipped": skipped + 1}
@@ -362,9 +375,9 @@ def _store_killed(cur, event: KilledEvent) -> dict[str, int]:
         (
             victim_id,
             event.timestamp,
-            event.killer_uid,
+            killer_uid,
             event.weapon,
-            event.distance,
+            None,
             event.victim_pos_x,
             event.victim_pos_y,
             event.victim_pos_z,
