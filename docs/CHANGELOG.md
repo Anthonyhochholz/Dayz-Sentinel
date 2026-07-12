@@ -9,25 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Changed
-- Consolidated documentation into canonical sources:
-  - `README.md` for installation, quick start, and API usage
-  - `docs/PROJECT_MEMORY.md` for current state and important facts
-  - `docs/ROADMAP.md` for future work only
-  - `docs/ARCHITECTURE.md` for architecture only
-  - `docs/CHANGELOG.md` for historical changes only
-- Archived SPR-020 and SPR-021 as historical sprint summaries with carry-over work moved to the roadmap.
-- Simplified the sprint backlog so it no longer duplicates roadmap detail.
-- Clarified the ADR index to distinguish the legacy consolidated ADR file from standalone ADR records.
-- Reframed `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, and `docs/PROJECT_MEMORY.md` around the DayZ Server Intelligence Platform vision instead of an economy-only API.
-- Updated roadmap priorities to center production readiness first, then mirror scanning, multi-file ingestion, analytics, and dashboard delivery.
-- Removed outdated economy-only wording where it duplicated or conflicted with the broader platform direction.
-- API now loads `.env` on startup via `python-dotenv`, and Docker Compose injects `.env` with `env_file`.
-- Removed tracked live SQLite database (`sentinel_spr019/database/sqlite/sentinel.db`) and added runtime DB bootstrap from schema files when missing.
-- Economy and import-tracking routes now offload synchronous SQLite repository calls to a thread pool.
-- `POST /api/v1/economy/events/{event_name}/toggle-active` now returns a generic 404 detail without exposing raw exception strings.
-
-### Removed
-- Deleted redundant status, audit, and review documents after merging current findings into the canonical docs.
+- Validated current implementation with local test run (`python -m pytest -q tests/`): 68 passed.
+- Refreshed README to document the current API surface, write-endpoint API-key behavior, import-tracking endpoints, and mirror import capabilities.
+- Updated `docs/PROJECT_MEMORY.md`, `docs/ARCHITECTURE.md`, and `docs/ROADMAP.md` to match the implemented state (mirror scanner, import pipeline, ADM importer, import tracking).
 
 ---
 

@@ -1,43 +1,37 @@
 # Roadmap — DayZ Sentinel
 
-> Future work only. Completed work belongs in `docs/CHANGELOG.md`; current state belongs in `docs/PROJECT_MEMORY.md`.
+> Nur zukünftige Arbeiten. Aktueller Zustand steht in `docs/PROJECT_MEMORY.md`.
 
-## P1 — Critical / Security / Production Readiness
+## P1 — Stabilität, Sicherheit, Maintainability
 
-| ID | Task | Why it matters | References |
-|----|------|----------------|------------|
-| P1-001 | Add authentication to `POST /api/v1/economy/events/{event_name}/toggle-active` | The only write endpoint is currently unauthenticated | AUDIT-001, SEC-001 |
-| P1-002 | Load application settings from `.env` and wire Docker env loading end-to-end | Future secrets and configuration are not available to Python code | SEC-002 |
-| P1-003 | Stop tracking the live SQLite database in git and add a reproducible DB bootstrap path | Current repo contains `sentinel.db`, which is a data exposure and maintenance risk | SEC-003 |
-| P1-004 | Finish the generic error-response cleanup for the toggle-active not-found path | One route still exposes `str(e)` in a 404 response | SEC-004 |
-| P1-005 | Move synchronous SQLite work off the async event loop | Current handlers can block concurrent requests | SEC-006 |
+| ID | Task | Why it matters |
+|----|------|----------------|
+| P1-001 | Cross-Layer-Abhängigkeit auflösen (`import_pipeline` -> `api.repositories`) | Saubere Architekturgrenzen zwischen Importer- und API-Layer |
+| P1-002 | CI-Workflow für `python -m pytest -q tests/` einführen | Kontinuierliche Qualitätssicherung statt nur lokaler Testläufe |
+| P1-003 | Dependencies pinnen und regelmäßige Security-Updates etablieren | Reproduzierbare Builds + geringeres Sicherheitsrisiko |
+| P1-004 | API-Responses auf typed `response_model` umstellen | Stabilere API-Verträge und bessere OpenAPI-Qualität |
 
-## P2 — Near-Term Platform Expansion
+## P2 — Ingestion-Erweiterung
 
-| ID | Task | Why it matters | References |
-|----|------|----------------|------------|
-| P2-001 | Build the Mirror Scanner framework | Establishes the entrypoint for ingesting a full DayZ server mirror instead of ad hoc single-file imports | Platform vision |
-| P2-002 | Add file type detection in the File Discovery Engine | Required to classify economy XML, cluster XML, spawn XML, world XML, ADM logs, RPT logs, and generic logs | Platform vision |
-| P2-003 | Implement cluster and world importers | Activates existing schema for cluster instances, map objects, and territory-related data | Existing schema |
-| P2-004 | Implement log importers for ADM, RPT, and generic log sources | Unlocks server intelligence beyond static economy data | Existing schema, `sentinel_v1_schema_rev2.sql` |
-| P2-005 | Create the Analytics Engine foundation | Needed for cross-source correlation, derived metrics, and intelligence outputs | Platform vision |
-| P2-006 | Add API route and integration tests beyond the importer suite | Current automated coverage is concentrated on `types_importer.py` | Sprint carry-over |
+| ID | Task | Why it matters |
+|----|------|----------------|
+| P2-001 | RPT-Importer implementieren | Aktuell werden RPT-Dateien nur erkannt, nicht importiert |
+| P2-002 | Cluster- und World-Importer implementieren | Aktiviert bestehende Schema-Domänen außerhalb Economy |
+| P2-003 | Import-Pipeline als CLI/Job-Entry-Point bereitstellen | Operativer Mirror-Import ohne direkten Python-Aufruf |
+| P2-004 | Import-Tracking um Retry-/Reprocessing-Strategien ergänzen | Kontrollierte Wiederholbarkeit bei Teilfehlern |
 
-## P3 — Platform Maturity and Delivery
+## P3 — Plattformreife
 
-| ID | Task | Why it matters | References |
-|----|------|----------------|------------|
-| P3-001 | Ship a dashboard for server intelligence and operations | Provides the primary operator-facing surface for analytics and mirror visibility | Platform vision |
-| P3-002 | Rename `sentinel_spr019` to a stable package name | Current package name is sprint-coupled and brittle | AUDIT-011 |
-| P3-003 | Wire existing Pydantic models into route `response_model` declarations | Restores typed OpenAPI output and removes model dead-weight | Existing models |
-| P3-004 | Add configurable CORS middleware | Required before any browser-based UI can call the API | AUDIT-012 |
-| P3-005 | Add rate limiting for read and write endpoints | Reduces abuse and complements future authentication | SEC-007 |
-| P3-006 | Add schema migration tooling | Database changes are still manual and platform expansion will increase schema churn | Existing schema |
-| P3-007 | Improve health checks and operational readiness metadata | Current health endpoint does not verify backing services or ingestion readiness | Security audit follow-up |
+| ID | Task | Why it matters |
+|----|------|----------------|
+| P3-001 | Analytics-/Read-Model-Layer aufbauen | Aus Rohdaten verwertbare Server-Insights ableiten |
+| P3-002 | Browser-fähige CORS-Konfiguration einführen | Voraussetzung für Dashboard-/Frontend-Anbindung |
+| P3-003 | Paketnamen von `sentinel_spr019` auf stabilen Namen migrieren | Technische Schulden durch sprint-gekoppelten Namespace reduzieren |
+| P3-004 | Observability ausbauen (Health+, Metriken, Logging-Standards) | Bessere Betriebsfähigkeit im produktiven Betrieb |
 
 ## Future Ideas
 
-- PostgreSQL backend option for larger deployments
-- Real-time log streaming
-- Discord notifications
-- Map visualization
+- PostgreSQL-Backend als Option
+- Realtime-Log-Streaming
+- Discord-/Webhook-Benachrichtigungen
+- Map-Visualisierung für Cluster/World-Daten
