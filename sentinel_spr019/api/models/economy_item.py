@@ -1,33 +1,37 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, ConfigDict, Field
+
+from sentinel_spr019.api.models.common import PaginationMeta
 
 
-class EconomyItemBase(BaseModel):
-    """Base model for economy items"""
+class EconomyItem(BaseModel):
+    """A single row of `economy_items`.
+
+    Every numeric column is nullable in the schema, because `types.xml` is not
+    required to declare them, so the model keeps them optional rather than
+    failing response validation on a sparse row.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
     name: str
-    nominal: float
-    min_value: float
-    max_value: float
-    restock: float
-    lifetime: float
+    nominal: int | None = None
+    min_value: int | None = None
+    max_value: int | None = None
+    restock: int | None = None
+    lifetime: int | None = None
 
 
-class EconomyItem(EconomyItemBase):
-    """Full economy item model"""
-    id: Optional[int] = None
+class EconomyItemListResponse(PaginationMeta):
+    """Paginated `economy_items` collection."""
 
-    class Config:
-        from_attributes = True
+    data: list[EconomyItem]
+    search: str | None = Field(
+        default=None,
+        description="Echo of the applied search filter; null when no filter was applied",
+    )
 
 
-class EconomyItemResponse(BaseModel):
-    """Response model for economy items"""
-    name: str
-    nominal: float
-    min_value: float
-    max_value: float
-    restock: float
-    lifetime: float
+class EconomyItemCountResponse(BaseModel):
+    """Row count for `economy_items`."""
 
-    class Config:
-        from_attributes = True
+    total: int

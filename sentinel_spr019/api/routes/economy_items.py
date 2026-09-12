@@ -4,6 +4,11 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Query
 from starlette.concurrency import run_in_threadpool
 
+from sentinel_spr019.api.models.economy_item import (
+    EconomyItem,
+    EconomyItemCountResponse,
+    EconomyItemListResponse,
+)
 from sentinel_spr019.api.repositories.economy_items_repository import EconomyItemsRepository
 
 LOGGER = logging.getLogger(__name__)
@@ -11,7 +16,7 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/economy", tags=["economy-items"])
 
 
-@router.get("/items", response_model=dict)
+@router.get("/items", response_model=EconomyItemListResponse)
 async def get_items(
     limit: int = Query(50, ge=1, le=1000),
     offset: int = Query(0, ge=0),
@@ -44,12 +49,12 @@ async def get_items(
                 "limit": limit,
                 "offset": offset
             }
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Error in get_items")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.get("/items/{item_name}", response_model=dict)
+@router.get("/items/{item_name}", response_model=EconomyItem)
 async def get_item(item_name: str):
     """
     Get a specific economy item by name.
@@ -68,12 +73,12 @@ async def get_item(item_name: str):
         return item
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Error in get_item: %s", item_name)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.get("/items/stats/count", response_model=dict)
+@router.get("/items/stats/count", response_model=EconomyItemCountResponse)
 async def get_items_count():
     """
     Get total count of economy items.
@@ -83,6 +88,6 @@ async def get_items_count():
     try:
         count = await run_in_threadpool(EconomyItemsRepository.get_count)
         return {"total": count}
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Error in get_items_count")
         raise HTTPException(status_code=500, detail="Internal server error")

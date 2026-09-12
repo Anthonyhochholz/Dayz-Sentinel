@@ -2,6 +2,12 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Query
 from starlette.concurrency import run_in_threadpool
 from typing import Optional
+from sentinel_spr019.api.models.economy_event import (
+    EconomyEvent,
+    EconomyEventCountResponse,
+    EconomyEventListResponse,
+    EconomyEventToggleResponse,
+)
 from sentinel_spr019.api.repositories.economy_events_repository import EconomyEventsRepository
 from sentinel_spr019.api.security import require_write_api_key
 
@@ -10,7 +16,7 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/economy", tags=["economy-events"])
 
 
-@router.get("/events", response_model=dict)
+@router.get("/events", response_model=EconomyEventListResponse)
 async def get_events(
     limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0),
@@ -58,12 +64,12 @@ async def get_events(
                 "offset": offset,
                 "active_only": active_only
             }
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Error in get_events")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.get("/events/{event_name}", response_model=dict)
+@router.get("/events/{event_name}", response_model=EconomyEvent)
 async def get_event(event_name: str):
     """
     Get a specific economy event by name.
@@ -82,12 +88,12 @@ async def get_event(event_name: str):
         return event
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Error in get_event: %s", event_name)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.post("/events/{event_name}/toggle-active", response_model=dict)
+@router.post("/events/{event_name}/toggle-active", response_model=EconomyEventToggleResponse)
 async def toggle_event_active(event_name: str, _auth: None = Depends(require_write_api_key)):
     """
     Toggle the active status of an economy event.
@@ -110,7 +116,7 @@ async def toggle_event_active(event_name: str, _auth: None = Depends(require_wri
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.get("/events/stats/count", response_model=dict)
+@router.get("/events/stats/count", response_model=EconomyEventCountResponse)
 async def get_events_count(active_only: bool = Query(False)):
     """
     Get total count of economy events.
@@ -125,6 +131,6 @@ async def get_events_count(active_only: bool = Query(False)):
             "total": count,
             "active_only": active_only
         }
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Error in get_events_count")
         raise HTTPException(status_code=500, detail="Internal server error")

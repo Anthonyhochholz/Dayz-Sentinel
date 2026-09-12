@@ -162,9 +162,11 @@ class EconomyEventsRepository:
             cursor = conn.cursor()
             cursor.execute("SELECT active FROM economy_events WHERE event_name = ?", (name,))
             result = cursor.fetchone()
-            if not result:
+            if result is None:
                 raise LookupError(f"Event '{name}' not found")
-            new_status = 1 - result[0]
+            # `active` is nullable in the schema; treat an unset flag as inactive
+            # so that toggling it activates the event instead of raising.
+            new_status = 0 if result[0] else 1
             cursor.execute(
                 "UPDATE economy_events SET active = ? WHERE event_name = ?",
                 (new_status, name),
