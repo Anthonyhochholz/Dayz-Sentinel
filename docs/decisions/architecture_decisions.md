@@ -58,8 +58,9 @@ Implement a Repository layer (`api/repositories/`) with static methods per domai
 
 ✅ Clear separation: routes handle HTTP, repositories handle SQL  
 ✅ Repositories can be tested in isolation with a test DB  
-⚠️ Currently returns `dict` instead of typed models — weakens type safety  
-⚠️ `dict_factory` duplicated (to be fixed in SPR-021)  
+✅ Resolved: routes validate repository dicts against typed `response_model` classes  
+✅ Resolved: `dict_factory` lives in `persistence/connection.py` (see ADR-0002)  
+⚠️ Superseded in part by ADR-0002: shared data access moved out of `api/repositories/`  
 
 ---
 
@@ -115,7 +116,7 @@ Use FastAPI with uvicorn as the ASGI server.
 ✅ Pydantic validation built in  
 ✅ Async-ready for future performance needs  
 ✅ `Query()` helpers make parameter validation concise  
-⚠️ `response_model=dict` currently defeats OpenAPI schema generation  
+✅ Resolved: all endpoints are bound to typed `response_model` classes (see ADR-0002)  
 
 ---
 
