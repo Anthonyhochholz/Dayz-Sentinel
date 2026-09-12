@@ -1,6 +1,7 @@
 import logging
-import sqlite3
 import xml.etree.ElementTree as ET
+
+from sentinel_spr019.persistence.connection import connect
 
 LOGGER = logging.getLogger(__name__)
 
@@ -13,7 +14,7 @@ def import_events(xml_file, db_file):
     tree = ET.parse(xml_file)
     root = tree.getroot()
 
-    conn = sqlite3.connect(db_file)
+    conn = connect(db_file)
     cur = conn.cursor()
 
     inserted = 0

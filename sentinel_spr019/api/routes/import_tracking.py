@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, HTTPException, Query
 from starlette.concurrency import run_in_threadpool
 
-from sentinel_spr019.api.repositories.import_tracking_repository import ImportTrackingRepository
+from sentinel_spr019.persistence.import_tracking_repository import ImportTrackingRepository
 
 LOGGER = logging.getLogger(__name__)
 

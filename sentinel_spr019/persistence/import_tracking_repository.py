@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sentinel_spr019.api.database import dict_factory, get_connection
+from sentinel_spr019.persistence.connection import dict_factory, get_connection
 
 
 class ImportTrackingRepository:

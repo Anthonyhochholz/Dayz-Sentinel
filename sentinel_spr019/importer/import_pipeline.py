@@ -1,12 +1,12 @@
 import hashlib
 import importlib
 import importlib.util
-from pathlib import Path
 
-from sentinel_spr019.api.repositories.import_tracking_repository import ImportTrackingRepository
 from sentinel_spr019.importer.economy.events_importer import import_events
 from sentinel_spr019.importer.economy.types_importer import import_types
 from sentinel_spr019.importer.mirror_scanner import scan_mirror
+from sentinel_spr019.persistence.connection import default_db_path
+from sentinel_spr019.persistence.import_tracking_repository import ImportTrackingRepository
 
 _ADM_IMPORTER_MODULE = "sentinel_spr019.importer.logs.adm_importer"
 try:
@@ -27,10 +27,6 @@ SCANNER_VERSION = "mirror-scanner-v1"
 IMPORTER_VERSION = "mirror-import-pipeline-v1"
 
 
-def _default_db_path() -> str:
-    return str(Path(__file__).resolve().parents[1] / "database" / "sqlite" / "sentinel.db")
-
-
 def _compute_file_hash(file_path: str) -> str:
     """Return the SHA-256 digest for a file path using chunked reads."""
     digest = hashlib.sha256()
@@ -49,7 +45,7 @@ def _importer_version_for_file(file_type: str, absolute_path: str) -> str:
 
 
 def run_mirror_import(mirror_root: str, db_file: str | None = None) -> dict:
-    database_path = db_file or _default_db_path()
+    database_path = db_file or default_db_path()
     discovered_files = scan_mirror(mirror_root)
 
     scan_id = ImportTrackingRepository.start_scan(
