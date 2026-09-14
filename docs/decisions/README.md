@@ -17,8 +17,9 @@ Architecture Decision Records (ADRs) for DayZ Sentinel.
 | ID | Title | Status | Date | Location |
 |----|-------|--------|------|----------|
 | ADR-0001 | Economy items schema | ✅ Accepted | 2026-06-17 | `ADR-0001-economy-items-schema.md` |
+| ADR-0002 | Shared persistence layer | ✅ Accepted | 2026-09-12 | `ADR-0002-shared-persistence-layer.md` |
 | ADR-001 | Use SQLite as primary database | ✅ Accepted | 2026-06 | `architecture_decisions.md` |
-| ADR-002 | Use repository pattern for data access | ✅ Accepted | 2026-06 | `architecture_decisions.md` |
+| ADR-002 | Use repository pattern for data access | ✅ Accepted (partly superseded by ADR-0002) | 2026-06 | `architecture_decisions.md` |
 | ADR-003 | Sprint-numbered Python package | ⚠️ Deprecated | 2026-06 | `architecture_decisions.md` |
 | ADR-004 | FastAPI over Flask/Django | ✅ Accepted | 2026-06 | `architecture_decisions.md` |
 

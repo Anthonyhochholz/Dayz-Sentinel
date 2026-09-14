@@ -8,10 +8,70 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- `.github/workflows/ci.yml` — CI mit drei Jobs: pytest auf Python 3.11/3.12/3.13,
+  ein Import-Check, der die FastAPI-App nur mit Runtime-Dependencies bootet, und
+  ein Docker-Image-Build. (P1-002, OPS-001)
+- `requirements-dev.txt` — Test-Dependencies getrennt vom Runtime-Set. `httpx`
+  (TestClient) und `requests` (`scripts/test_api.py`) sind Dev-Dependencies und
+  landen nicht mehr im Container-Image. (P1-003)
+- `sentinel_spr019/persistence/` — neutrale Persistenzschicht, auf die API- und
+  Importer-Layer gemeinsam zugreifen, ohne voneinander abzuhängen. Enthält
+  `connection.py` (aus `api/database.py`) und die verschobene
+  `import_tracking_repository.py`. (P1-001, ARCH-001)
+- `persistence.connection.connect()` — setzt `PRAGMA foreign_keys = ON` für jede
+  Verbindung.
+- `sentinel_spr019/api/models/import_tracking.py` und `api/models/common.py` —
+  Response-Modelle für Scans, Scan-Dateien, Runs, Health und Pagination. (P1-004)
+- `sentinel_spr019/importer/cli.py` und `__main__.py` — Mirror-Import als
+  Entry-Point: `python -m sentinel_spr019.importer <mirror-root>` mit
+  `--db-path`, `--json`, `-v` und den Exit-Codes 0 (ok), 1 (Dateien fehlgeschlagen),
+  2 (unbrauchbarer Mirror-Root). (P2-003)
+- `sentinel_spr019/api/cors.py` — CORS-Allow-List aus `SENTINEL_CORS_ORIGINS`.
+  Ohne gesetzte Variable wird keine Middleware installiert; `*` wird beim Start
+  abgelehnt. (P3-002, AUDIT-012)
+- `create_app()` in `api/main.py` — Konfiguration wird beim App-Bau gelesen.
+  Das Modul-Level-`app` bleibt erhalten, `sentinel_spr019.api.main:app`
+  funktioniert unverändert.
+- `tests/test_persistence_and_layering.py` (11 Tests), `tests/test_api_contracts.py`
+  (29 Tests), `tests/test_importer_cli.py` (11 Tests), `tests/test_cors.py` (17 Tests).
+- `__init__.py` in `importer/` und `importer/economy/`, die zuvor implizite
+  Namespace-Packages waren, während `importer/logs/` ein reguläres Package war.
+- `docs/decisions/ADR-0002-shared-persistence-layer.md` — dokumentiert die
+  Persistenzschicht und was sie an ADR-002 ablöst.
+
 ### Changed
-- Validated current implementation with local test run (`python -m pytest -q tests/`): 68 passed.
-- Refreshed README to document the current API surface, write-endpoint API-key behavior, import-tracking endpoints, and mirror import capabilities.
-- Updated `docs/PROJECT_MEMORY.md`, `docs/ARCHITECTURE.md`, and `docs/ROADMAP.md` to match the implemented state (mirror scanner, import pipeline, ADM importer, import tracking).
+- `requirements.txt` — alle Runtime-Dependencies auf exakte Versionen gepinnt.
+- Alle zwölf Endpunkte nutzen typisierte Pydantic-`response_model` statt
+  `response_model=dict`. (P1-004)
+- `api/models/economy_item.py` und `economy_event.py` gegen das echte Schema
+  neu geschrieben: alle numerischen Spalten sind nullable INTEGER/REAL, nicht
+  erforderliche Floats. Die ungenutzten `*Base`/`*Response`-Dubletten entfielen.
+- `events_importer.py` und `adm_importer.py` öffnen ihre Verbindung über
+  `persistence.connection.connect()` und schreiben damit erstmals mit
+  erzwungenen Fremdschlüsseln.
+- `import_pipeline.py` nutzt `persistence.connection.default_db_path()` statt
+  eines eigenen Duplikats.
+
+### Fixed
+- **Breaking (Response-Shape):** `economy_events.active` wird als Boolean
+  ausgeliefert. Die Read-Endpunkte gaben den rohen INTEGER 0/1 zurück, während
+  der Toggle-Endpunkt für denselben Begriff einen echten Boolean lieferte.
+- **Breaking (Response-Shape):** Die Listen-Envelopes führen `search` immer mit
+  (`null`, wenn nicht gefiltert), statt den Schlüssel weggelassen.
+- `PRAGMA foreign_keys` in den Schema-Dateien gilt nur für die Verbindung, die
+  das Skript ausgeführt hat. `events_importer.py` und `adm_importer.py`
+  schrieben deshalb ohne Referenz-Integritätsprüfung.
+- `toggle_active` berechnete `1 - result[0]` und lief bei einem Event mit
+  `active IS NULL` in einen `TypeError`, der beim Client als 500 ankam. Ein
+  ungesetztes Flag gilt nun als inaktiv.
+
+### Verified
+- `python -m pytest -q tests/`: **136 passed** (vorher 68).
+- Die 68 bestehenden Tests laufen unverändert auf Python 3.11, 3.12 und 3.13
+  gegen das gepinnte Dependency-Set.
+- End-to-End-CLI-Lauf: `types.xml` und ein ADM-Log importiert, `.rpt` als
+  `unsupported` erfasst.
 
 ---
 

@@ -1,5 +1,5 @@
-fastapi
-uvicorn[standard]
-requests
-httpx
-python-dotenv
+# Runtime dependencies (pinned for reproducible builds).
+# Development/test dependencies live in requirements-dev.txt.
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+python-dotenv==1.2.3

@@ -1,8 +1,9 @@
 import hashlib
 import re
-import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
+
+from sentinel_spr019.persistence.connection import connect
 
 
 _HEADER_RE = re.compile(r"^AdminLog started on (\d{4}-\d{2}-\d{2}) at (\d{2}:\d{2}:\d{2})$")
@@ -199,7 +200,7 @@ def import_adm(file_path: str | Path, db_file: str) -> tuple[int, int]:
     stored = 0
     skipped = 0
 
-    conn = sqlite3.connect(db_file)
+    conn = connect(db_file)
     cur = conn.cursor()
 
     try:

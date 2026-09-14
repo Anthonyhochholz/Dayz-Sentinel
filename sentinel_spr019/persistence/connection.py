@@ -1,12 +1,18 @@
-import sqlite3
 import os
+import sqlite3
 from pathlib import Path
 
-_DEFAULT_DB_PATH = str(Path(__file__).resolve().parent.parent / "database" / "sqlite" / "sentinel.db")
+_PACKAGE_ROOT = Path(__file__).resolve().parent.parent
+_DEFAULT_DB_PATH = str(_PACKAGE_ROOT / "database" / "sqlite" / "sentinel.db")
 _SCHEMA_FILES = (
-    Path(__file__).resolve().parent.parent / "database" / "schema" / "sentinel_v1_schema.sql",
-    Path(__file__).resolve().parent.parent / "database" / "schema" / "sentinel_v1_schema_rev2.sql",
+    _PACKAGE_ROOT / "database" / "schema" / "sentinel_v1_schema.sql",
+    _PACKAGE_ROOT / "database" / "schema" / "sentinel_v1_schema_rev2.sql",
 )
+
+
+def default_db_path() -> str:
+    """Return the default SQLite path used when no path is configured."""
+    return _DEFAULT_DB_PATH
 
 
 def _bootstrap_database(db_path: Path) -> None:
@@ -30,13 +36,27 @@ def _bootstrap_database(db_path: Path) -> None:
         conn.commit()
 
 
-def get_connection(db_path: str | Path | None = None):
+def connect(db_path: str | Path) -> sqlite3.Connection:
+    """Open a SQLite connection with the project's connection invariants applied.
+
+    `PRAGMA foreign_keys` is a per-connection setting, so the declaration in the
+    schema files does not carry over to later connections. Every connection in
+    the project is opened through this function so that referential integrity is
+    enforced consistently for API reads, writes, and importer runs alike.
+    """
+    conn = sqlite3.connect(str(db_path))
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
+
+
+def get_connection(db_path: str | Path | None = None) -> sqlite3.Connection:
+    """Open a connection to the configured database, bootstrapping it if absent."""
     if db_path is None:
         db_path = os.getenv("SENTINEL_DB_PATH", _DEFAULT_DB_PATH)
 
     resolved_path = Path(db_path)
     _bootstrap_database(resolved_path)
-    return sqlite3.connect(str(resolved_path))
+    return connect(resolved_path)
 
 
 def dict_factory(cursor, row):

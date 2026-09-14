@@ -1,7 +1,7 @@
 import logging
 from typing import List, Optional
 
-from sentinel_spr019.api.database import get_connection, dict_factory
+from sentinel_spr019.persistence.connection import get_connection, dict_factory
 
 LOGGER = logging.getLogger(__name__)
 
